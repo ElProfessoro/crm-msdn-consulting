@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Importer - CRM Équipe</title>
+  <link rel="stylesheet" href="/src/styles/global.css">
+  <style>
+    .import-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .info-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .info-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      background-color: var(--gray-100);
+    }
+
+    .info-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .info-description {
+      font-size: 13px;
+      color: var(--gray-600);
+      line-height: 1.5;
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 64px 32px;
+      text-align: center;
+      background: var(--gray-50);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 16px;
+    }
+
+    .upload-zone:hover {
+      border-color: var(--primary-blue);
+      background: var(--primary-blue-light);
+    }
+
+    .upload-zone.dragover {
+      border-color: var(--primary-blue);
+      background: var(--primary-blue-light);
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .upload-text {
+      font-size: 15px;
+      color: var(--gray-700);
+      margin-bottom: 8px;
+    }
+
+    .upload-hint {
+      font-size: 13px;
+      color: var(--gray-500);
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .mapping-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .mapping-table th {
+      background-color: var(--gray-50);
+      padding: 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .mapping-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .file-detected {
+      background: var(--primary-blue-light);
+      border: 1px solid var(--primary-blue);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .step-indicator {
+      display: inline-block;
+      background: var(--gray-900);
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+
+    .step-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Importer vos leads</h1>
+        <p class="page-subtitle">Ajoutez rapidement de nouveaux contacts à votre base de données via un fichier CSV ou Excel.</p>
+      </div>
+
+      <div class="import-grid">
+        <div class="info-card">
+          <div class="info-icon">📄</div>
+          <div class="info-title">Format accepté</div>
+          <div class="info-description">Utilisez uniquement des fichiers .csv ou .xlsx.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">⚠️</div>
+          <div class="info-title">Colonnes requises</div>
+          <div class="info-description">L'email est obligatoire pour créer un lead.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">✓</div>
+          <div class="info-title">Doublons</div>
+          <div class="info-description">Les emails existants seront ignorés.</div>
+        </div>
+      </div>
+
+      <!-- Étape 1 -->
+      <div class="card mb-6" id="step1">
+        <div class="step-title">
+          <span class="step-indicator">1</span>
+          Télécharger le fichier
+        </div>
+
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon">☁️</div>
+          <div class="upload-text">
+            <strong style="color: var(--primary-blue);">Cliquez pour parcourir</strong> ou glissez-déposez
+          </div>
+          <div class="upload-hint">CSV, XLS, XLSX (MAX 5MB)</div>
+        </div>
+
+        <input
+          type="file"
+          id="fileInput"
+          class="file-input"
+          accept=".csv,.xlsx,.xls"
+        >
+
+        <div style="text-align: center;">
+          <a href="#" onclick="downloadTemplate(); return false;" style="font-size: 14px;">
+            📥 Télécharger le modèle CSV
+          </a>
+        </div>
+      </div>
+
+      <!-- Étape 2 -->
+      <div class="card" id="step2" style="display: none;">
+        <div class="step-title">
+          <span class="step-indicator">2</span>
+          Correspondance des colonnes
+        </div>
+
+        <div class="file-detected" id="fileDetected">
+          <div class="file-info">
+            <div style="font-size: 24px;">📄</div>
+            <div>
+              <div style="font-weight: 600; color: var(--gray-900);" id="fileName">-</div>
+              <div style="font-size: 13px; color: var(--gray-600);" id="fileSize">-</div>
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="resetUpload()">Supprimer le fichier</button>
+        </div>
+
+        <table class="mapping-table" id="mappingTable">
+          <thead>
+            <tr>
+              <th>COLONNE DU FICHIER</th>
+              <th>EXEMPLE (LIGNE 1)</th>
+              <th>CHAMP CRM</th>
+            </tr>
+          </thead>
+          <tbody id="mappingBody">
+          </tbody>
+        </table>
+
+        <div style="margin-top: 24px; text-align: right;">
+          <button class="btn btn-secondary" onclick="resetUpload()" style="margin-right: 12px;">
+            Annuler
+          </button>
+          <button class="btn btn-primary" onclick="processImport()">
+            Importer les leads
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/src/lib/api.js"></script>
+  <script src="/src/lib/utils.js"></script>
+  <script src="/src/components/sidebar.js"></script>
+  <script>
+    if (!utils.requireAuth()) throw new Error('Not authenticated');
+
+    const sidebar = new Sidebar('import');
+    sidebar.init();
+
+    let currentFile = null;
+    let currentImportId = null;
+    let csvData = null;
+
+    // Drag & drop
+    const uploadZone = document.getElementById('uploadZone');
+
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFile(files[0]);
+      }
+    });
+
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    async function handleFile(file) {
+      currentFile = file;
+
+      // Vérifications
+      if (file.size > 5 * 1024 * 1024) {
+        utils.showError('Fichier trop volumineux (max 5MB)');
+        return;
+      }
+
+      const validTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+      if (!validTypes.includes(file.type) && !file.name.match(/\.(csv|xlsx?)$/i)) {
+        utils.showError('Format de fichier non supporté');
+        return;
+      }
+
+      try {
+        // Upload vers le serveur
+        const response = await api.uploadImport(file);
+        currentImportId = response.import.id;
+
+        // Lire le CSV pour afficher le mapping
+        await parseCSV(file);
+
+        // Afficher étape 2
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileSize').textContent = `${Math.round(file.size / 1024)} KB`;
+
+      } catch (error) {
+        console.error('Upload error:', error);
+        utils.showError(error.message);
+      }
+    }
+
+    async function parseCSV(file) {
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+
+      if (lines.length < 2) {
+        throw new Error('Le fichier CSV doit contenir au moins 2 lignes (en-têtes + données)');
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const firstRow = lines[1].split(',').map(v => v.trim().replace(/"/g, ''));
+
+      csvData = { headers, firstRow, totalLines: lines.length - 1 };
+
+      renderMapping();
+    }
+
+    function renderMapping() {
+      const tbody = document.getElementById('mappingBody');
+
+      const crmFields = [
+        { value: '', label: '-- Ne pas importer --' },
+        { value: 'full_name', label: 'Nom complet' },
+        { value: 'first_name', label: 'Prénom' },
+        { value: 'last_name', label: 'Nom' },
+        { value: 'email', label: 'Email' },
+        { value: 'phone', label: 'Téléphone' },
+        { value: 'company', label: 'Entreprise' },
+        { value: 'position', label: 'Poste' },
+      ];
+
+      tbody.innerHTML = csvData.headers.map((header, index) => {
+        // Détection automatique
+        let suggested = '';
+        const lowerHeader = header.toLowerCase();
+        if (lowerHeader.includes('email') || lowerHeader.includes('mail')) suggested = 'email';
+        else if (lowerHeader.includes('nom')) suggested = 'full_name';
+        else if (lowerHeader.includes('phone') || lowerHeader.includes('tel')) suggested = 'phone';
+        else if (lowerHeader.includes('entreprise') || lowerHeader.includes('company')) suggested = 'company';
+        else if (lowerHeader.includes('poste') || lowerHeader.includes('position')) suggested = 'position';
+
+        return `
+          <tr>
+            <td style="font-weight: 500;">${header}</td>
+            <td style="color: var(--gray-600);">${csvData.firstRow[index] || '-'}</td>
+            <td>
+              <select class="form-select" data-column="${header}" style="font-size: 13px;">
+                ${crmFields.map(field => `
+                  <option value="${field.value}" ${field.value === suggested ? 'selected' : ''}>
+                    ${field.label}
+                  </option>
+                `).join('')}
+              </select>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function processImport() {
+      try {
+        // Récupérer le mapping
+        const mapping = {};
+        document.querySelectorAll('#mappingBody select').forEach(select => {
+          const column = select.dataset.column;
+          const crmField = select.value;
+          if (crmField) {
+            mapping[column] = crmField;
+          }
+        });
+
+        // Vérifier qu'on a l'email
+        const hasEmail = Object.values(mapping).includes('email');
+        if (!hasEmail) {
+          utils.showError('Vous devez mapper au moins la colonne Email');
+          return;
+        }
+
+        // Lancer le traitement
+        const response = await api.processImport(currentImportId, mapping);
+
+        utils.showSuccess(`Import terminé ! ${response.imported} leads importés, ${response.failed} échoués.`);
+
+        // Rediriger vers les leads
+        setTimeout(() => {
+          window.location.href = '/leads.html';
+        }, 2000);
+
+      } catch (error) {
+        console.error('Import processing error:', error);
+        utils.showError(error.message);
+      }
+    }
+
+    function resetUpload() {
+      currentFile = null;
+      currentImportId = null;
+      csvData = null;
+      document.getElementById('step1').style.display = 'block';
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('fileInput').value = '';
+    }
+
+    function downloadTemplate() {
+      const csvContent = 'full_name,email,phone,company,position\n' +
+        'Jean Dupont,jean.dupont@example.com,+33 6 12 34 56 78,Example SA,Directeur Commercial\n';
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'template_leads.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

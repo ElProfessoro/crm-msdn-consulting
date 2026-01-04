@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord - CRM Pro</title>
+  <link rel="stylesheet" href="/src/styles/global.css">
+  <style>
+    .dashboard-grid {
+      display: grid;
+      gap: 24px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+
+    .stat-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .stat-icon.blue { background-color: #dbeafe; color: #2563eb; }
+    .stat-icon.red { background-color: #fee2e2; color: #ef4444; }
+    .stat-icon.green { background-color: #dcfce7; color: #22c55e; }
+    .stat-icon.purple { background-color: #f3e8ff; color: #9333ea; }
+
+    .stat-info {
+      flex: 1;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--gray-600);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .stat-period {
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-title a {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .task-list {
+      list-style: none;
+    }
+
+    .task-item {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    .task-item:hover {
+      background-color: var(--gray-50);
+    }
+
+    .task-item:last-child {
+      border-bottom: none;
+    }
+
+    .task-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .task-meta {
+      font-size: 13px;
+      color: var(--gray-600);
+    }
+
+    .leads-table-mini {
+      width: 100%;
+    }
+
+    .leads-table-mini th {
+      background-color: var(--gray-50);
+      padding: 12px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-600);
+      text-transform: uppercase;
+    }
+
+    .leads-table-mini td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+    }
+
+    .activity-list {
+      list-style: none;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-900);
+      margin-bottom: 2px;
+    }
+
+    .activity-time {
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+
+    .appointment-card {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .appointment-time {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .appointment-title {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .appointment-company {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .greeting {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .current-date {
+      font-size: 14px;
+      color: var(--gray-600);
+      margin-bottom: 32px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <main class="main-content">
+      <div class="greeting" id="greeting">Bonjour 👋</div>
+      <div class="current-date" id="currentDate"></div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon green">📈</div>
+            <div class="stat-info">
+              <div class="stat-label">Leads gagnés</div>
+              <div class="stat-value" id="leadsWon">0</div>
+            </div>
+          </div>
+          <div class="stat-period">ce mois</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon red">📉</div>
+            <div class="stat-info">
+              <div class="stat-label">Leads perdus</div>
+              <div class="stat-value" id="leadsLost">0</div>
+            </div>
+          </div>
+          <div class="stat-period">ce mois</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon blue">✓</div>
+            <div class="stat-info">
+              <div class="stat-label">Tâches collectées</div>
+              <div class="stat-value" id="tasksToday">0</div>
+            </div>
+          </div>
+          <div class="stat-period">aujourd'hui</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon purple">%</div>
+            <div class="stat-info">
+              <div class="stat-label">Taux de conversion</div>
+              <div class="stat-value" id="conversionRate">0%</div>
+            </div>
+          </div>
+          <div class="stat-period">ce mois</div>
+        </div>
+      </div>
+
+      <!-- Grid 2 colonnes -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+        <!-- Colonne gauche -->
+        <div>
+          <!-- Tâches prioritaires -->
+          <div class="card mb-6">
+            <div class="section-title">
+              <span>Tâches Prioritaires</span>
+              <a href="/tasks.html">Voir tout</a>
+            </div>
+            <ul class="task-list" id="priorityTasks">
+              <li style="text-align: center; padding: 24px; color: var(--gray-500);">
+                Chargement...
+              </li>
+            </ul>
+          </div>
+
+          <!-- Derniers leads -->
+          <div class="card">
+            <div class="section-title">
+              <span>Derniers Leads</span>
+              <a href="/leads.html">Voir tous les leads</a>
+            </div>
+            <table class="leads-table-mini" id="recentLeadsTable">
+              <thead>
+                <tr>
+                  <th>NOM</th>
+                  <th>SOCIÉTÉ</th>
+                  <th>EXPERT</th>
+                  <th>AJOUTÉ LE</th>
+                  <th>ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="recentLeads">
+                <tr>
+                  <td colspan="5" style="text-align: center; padding: 24px; color: var(--gray-500);">
+                    Chargement...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Colonne droite -->
+        <div>
+          <!-- Activité récente -->
+          <div class="card mb-6">
+            <div class="section-title">
+              <span>Activité Récente</span>
+            </div>
+            <ul class="activity-list" id="recentActivities">
+              <li style="text-align: center; padding: 24px; color: var(--gray-500);">
+                Chargement...
+              </li>
+            </ul>
+          </div>
+
+          <!-- Prochain RDV -->
+          <div id="appointmentContainer"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/src/lib/api.js"></script>
+  <script src="/src/lib/utils.js"></script>
+  <script src="/src/components/sidebar.js"></script>
+  <script>
+    // Protection auth
+    if (!utils.requireAuth()) {
+      throw new Error('Not authenticated');
+    }
+
+    // Init sidebar
+    const sidebar = new Sidebar('dashboard');
+    sidebar.init();
+
+    // Date actuelle
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('currentDate').textContent =
+      now.toLocaleDateString('fr-FR', options).charAt(0).toUpperCase() +
+      now.toLocaleDateString('fr-FR', options).slice(1);
+
+    // Charger les données
+    async function loadDashboard() {
+      try {
+        const [stats, tasks, leads, activities, appointment, user] = await Promise.all([
+          api.getDashboardStats(),
+          api.getPriorityTasks(),
+          api.getRecentLeads(),
+          api.getRecentActivities(),
+          api.getNextAppointment(),
+          api.getMe(),
+        ]);
+
+        // Greeting personnalisé
+        document.getElementById('greeting').textContent = `Bonjour, ${user.user.first_name} 👋`;
+
+        // Stats
+        document.getElementById('leadsWon').textContent = stats.stats.leads_won_month;
+        document.getElementById('leadsLost').textContent = stats.stats.leads_lost_month;
+        document.getElementById('tasksToday').textContent = stats.stats.tasks_today;
+        document.getElementById('conversionRate').textContent = stats.stats.conversion_rate + '%';
+
+        // Tâches prioritaires
+        renderPriorityTasks(tasks.tasks);
+
+        // Leads récents
+        renderRecentLeads(leads.leads);
+
+        // Activités récentes
+        renderRecentActivities(activities.activities);
+
+        // Prochain RDV
+        renderAppointment(appointment.appointment);
+
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+        utils.showError('Erreur lors du chargement du tableau de bord');
+      }
+    }
+
+    function renderPriorityTasks(tasks) {
+      const container = document.getElementById('priorityTasks');
+
+      if (!tasks || tasks.length === 0) {
+        container.innerHTML = '<li style="text-align: center; padding: 24px; color: var(--gray-500);">Aucune tâche à faire</li>';
+        return;
+      }
+
+      container.innerHTML = tasks.slice(0, 5).map(task => {
+        const isOverdue = task.due_at && new Date(task.due_at) < new Date() && task.status !== 'termine';
+        const priorityColor = task.priority === 'haute' ? '#dc2626' : task.priority === 'normale' ? '#f59e0b' : '#10b981';
+
+        return `
+          <li class="task-item" onclick="window.location.href='/tasks.html'" style="${isOverdue ? 'background: #fef2f2;' : ''}">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+              <div style="flex: 1;">
+                <div class="task-title" style="font-weight: 600; color: var(--gray-900); margin-bottom: 4px;">
+                  ${task.title}
+                </div>
+                ${task.lead_name ? `<div style="font-size: 13px; color: var(--gray-600);">📎 ${task.lead_name}${task.lead_company ? ` (${task.lead_company})` : ''}</div>` : ''}
+              </div>
+              <div style="width: 4px; height: 40px; background: ${priorityColor}; border-radius: 2px; flex-shrink: 0;"></div>
+            </div>
+            ${task.description ? `<div style="font-size: 13px; color: var(--gray-600); margin-bottom: 8px;">${task.description.substring(0, 80)}${task.description.length > 80 ? '...' : ''}</div>` : ''}
+            <div class="task-meta" style="display: flex; gap: 12px; font-size: 12px; color: var(--gray-500);">
+              <span class="badge ${utils.getStatusBadgeClass(task.status)}">${utils.getTaskStatusLabel(task.status)}</span>
+              <span class="badge badge-${task.priority === 'haute' ? 'red' : task.priority === 'normale' ? 'yellow' : 'green'}">${utils.getPriorityLabel(task.priority)}</span>
+              ${task.due_at ? `<span>⏰ ${utils.formatDate(task.due_at)}${isOverdue ? ' <span style="color: #dc2626; font-weight: 600;">⚠️ En retard</span>' : ''}</span>` : ''}
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+
+    function renderRecentLeads(leads) {
+      const tbody = document.getElementById('recentLeads');
+
+      if (!leads || leads.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--gray-500);">Aucun lead</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = leads.slice(0, 5).map(lead => `
+        <tr>
+          <td>${lead.full_name || lead.email}</td>
+          <td>${lead.company || '-'}</td>
+          <td>${lead.owner_first_name} ${lead.owner_last_name}</td>
+          <td>${utils.formatDate(lead.created_at)}</td>
+          <td><a href="/lead.html?id=${lead.id}">Voir →</a></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderRecentActivities(activities) {
+      const container = document.getElementById('recentActivities');
+
+      if (!activities || activities.length === 0) {
+        container.innerHTML = '<li style="text-align: center; padding: 24px; color: var(--gray-500);">Aucune activité</li>';
+        return;
+      }
+
+      const icons = {
+        call_made: { icon: '📞', bg: '#dbeafe', color: '#2563eb' },
+        email_sent: { icon: '📧', bg: '#dbeafe', color: '#2563eb' },
+        note_added: { icon: '📝', bg: '#f3e8ff', color: '#9333ea' },
+        status_changed: { icon: '🔄', bg: '#dcfce7', color: '#22c55e' },
+        lead_created: { icon: '✨', bg: '#fef3c7', color: '#d97706' },
+        task_created: { icon: '✓', bg: '#dbeafe', color: '#2563eb' },
+        task_updated: { icon: '🔄', bg: '#dcfce7', color: '#22c55e' },
+        lead_reassigned: { icon: '👥', bg: '#fef3c7', color: '#f59e0b' },
+      };
+
+      container.innerHTML = activities.slice(0, 8).map(activity => {
+        const style = icons[activity.activity_type] || { icon: '•', bg: '#f3f4f6', color: '#6b7280' };
+
+        return `
+          <li class="activity-item" style="cursor: ${activity.lead_id ? 'pointer' : 'default'};" ${activity.lead_id ? `onclick="window.location.href='/lead.html?id=${activity.lead_id}'"` : ''}>
+            <div class="activity-icon" style="background-color: ${style.bg}; color: ${style.color};">
+              ${style.icon}
+            </div>
+            <div class="activity-content" style="flex: 1;">
+              <div class="activity-title" style="font-weight: 600; color: var(--gray-900); margin-bottom: 2px;">
+                ${activity.title}
+              </div>
+              ${activity.description ? `<div style="font-size: 12px; color: var(--gray-600); margin-bottom: 4px;">${activity.description}</div>` : ''}
+              ${activity.lead_name ? `<div style="font-size: 12px; color: var(--gray-500);">📎 ${activity.lead_name}${activity.lead_company ? ` (${activity.lead_company})` : ''}</div>` : ''}
+              <div class="activity-time" style="font-size: 11px; color: var(--gray-400); margin-top: 4px;">
+                ${activity.user_first_name} ${activity.user_last_name} • ${utils.formatRelativeTime(activity.created_at)}
+              </div>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+
+    function renderAppointment(appointment) {
+      const container = document.getElementById('appointmentContainer');
+
+      if (!appointment) {
+        container.innerHTML = `
+          <div class="card" style="text-align: center; padding: 24px; color: var(--gray-500);">
+            Aucun rendez-vous à venir
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="appointment-card">
+          <div class="appointment-time">${utils.formatTime(appointment.due_at)}</div>
+          <div class="appointment-title">${appointment.title}</div>
+          <div class="appointment-company">${appointment.lead_company || 'Tâche interne'}</div>
+        </div>
+      `;
+    }
+
+    // Charger au démarrage
+    loadDashboard();
+  </script>
+</body>
+</html>

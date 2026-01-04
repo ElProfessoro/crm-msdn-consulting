@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liste des Leads - CRM MVP</title>
+  <link rel="stylesheet" href="/src/styles/global.css">
+  <style>
+    .page-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .search-bar {
+      flex: 1;
+      max-width: 400px;
+      margin-right: 16px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 16px 10px 40px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      font-size: 14px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 12px center;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-btn:hover {
+      background-color: var(--gray-50);
+    }
+
+    .filter-btn.active {
+      background-color: var(--gray-900);
+      color: white;
+      border-color: var(--gray-900);
+    }
+
+    .lead-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 1.2fr 150px 150px 100px;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      transition: background-color 0.15s;
+    }
+
+    .lead-row:hover {
+      background-color: var(--gray-50);
+    }
+
+    .lead-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: var(--gray-200);
+    }
+
+    .lead-name {
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .pagination-info {
+      font-size: 13px;
+      color: var(--gray-600);
+      margin-right: 16px;
+    }
+
+    .page-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+
+    .page-btn:hover {
+      background-color: var(--gray-50);
+    }
+
+    .page-btn.active {
+      background-color: var(--primary-blue);
+      color: white;
+      border-color: var(--primary-blue);
+    }
+
+    .page-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Liste des Leads</h1>
+        <p class="page-subtitle">Gérez et suivez l'évolution de votre pipeline de prospection.</p>
+      </div>
+
+      <div class="page-actions">
+        <div class="search-bar">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Rechercher par nom ou entreprise..."
+            id="searchInput"
+          >
+        </div>
+        <button class="btn btn-primary" onclick="window.location.href='/lead-create.html'">
+          + Ajouter un lead
+        </button>
+      </div>
+
+      <div class="filters">
+        <button class="filter-btn active" data-status="all">Tous</button>
+        <button class="filter-btn" data-status="nouveau">Nouveau</button>
+        <button class="filter-btn" data-status="en_cours">En cours</button>
+        <button class="filter-btn" data-status="gagne">Gagné</button>
+        <button class="filter-btn" data-status="perdu">Perdu</button>
+      </div>
+
+      <div class="card">
+        <div class="table-container">
+          <div style="font-weight: 600; font-size: 12px; color: var(--gray-600); text-transform: uppercase; padding: 12px 16px; background-color: var(--gray-50); display: grid; grid-template-columns: 60px 1fr 1.2fr 150px 150px 100px;">
+            <div></div>
+            <div>NOM DU LEAD</div>
+            <div>ENTREPRISE</div>
+            <div>STATUT</div>
+            <div>DERNIÈRE ACTIVITÉ</div>
+            <div>ACTIONS</div>
+          </div>
+          <div id="leadsContainer">
+            <div style="text-align: center; padding: 48px; color: var(--gray-500);">
+              Chargement...
+            </div>
+          </div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/src/lib/api.js"></script>
+  <script src="/src/lib/utils.js"></script>
+  <script src="/src/components/sidebar.js"></script>
+  <script>
+    if (!utils.requireAuth()) throw new Error('Not authenticated');
+
+    const sidebar = new Sidebar('leads');
+    sidebar.init();
+
+    let currentFilter = 'all';
+    let currentSearch = '';
+
+    // Filtres
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.status;
+        loadLeads();
+      });
+    });
+
+    // Recherche avec debounce
+    document.getElementById('searchInput').addEventListener('input', utils.debounce((e) => {
+      currentSearch = e.target.value;
+      loadLeads();
+    }, 300));
+
+    async function loadLeads() {
+      try {
+        const filters = {};
+        if (currentFilter !== 'all') {
+          filters.status = currentFilter;
+        }
+        if (currentSearch) {
+          filters.search = currentSearch;
+        }
+
+        const response = await api.getLeads(filters);
+        renderLeads(response.leads);
+      } catch (error) {
+        console.error('Error loading leads:', error);
+        document.getElementById('leadsContainer').innerHTML = `
+          <div style="text-align: center; padding: 48px; color: var(--gray-500);">
+            Erreur lors du chargement des leads
+          </div>
+        `;
+      }
+    }
+
+    function renderLeads(leads) {
+      const container = document.getElementById('leadsContainer');
+
+      if (!leads || leads.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 48px; color: var(--gray-500);">
+            Aucun lead trouvé
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = leads.map((lead, index) => {
+        // Générer un avatar avec les initiales et couleur
+        const initials = utils.getInitials(lead.first_name, lead.last_name);
+        const colors = ['#2563eb', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#16a34a', '#0891b2', '#4f46e5'];
+        const colorIndex = lead.id % colors.length;
+        const bgColor = colors[colorIndex];
+
+        return `
+          <div class="lead-row">
+            <div>
+              <div class="lead-avatar" style="background-color: ${bgColor}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">
+                ${initials}
+              </div>
+            </div>
+            <div class="lead-name">${lead.full_name || lead.email}</div>
+            <div style="color: var(--gray-600);">${lead.company || '-'}</div>
+            <div>
+              <span class="badge ${utils.getStatusBadgeClass(lead.status)}">
+                ${utils.getStatusLabel(lead.status)}
+              </span>
+            </div>
+            <div style="color: var(--gray-600); font-size: 13px;">
+              ${utils.formatRelativeTime(lead.last_activity_at || lead.updated_at)}
+            </div>
+            <div>
+              <a href="/lead.html?id=${lead.id}" style="color: var(--primary-blue); font-weight: 500;">
+                Voir →
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Pagination simple
+      document.getElementById('pagination').innerHTML = `
+        <span class="pagination-info">Affichage de 1 à ${leads.length} résultats</span>
+        <button class="page-btn active">1</button>
+      `;
+    }
+
+    loadLeads();
+  </script>
+</body>
+</html>

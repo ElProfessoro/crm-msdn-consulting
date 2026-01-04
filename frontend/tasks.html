@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tâches - CRM Connect</title>
+  <link rel="stylesheet" href="/src/styles/global.css">
+  <style>
+    .tasks-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .tasks-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--gray-700);
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      background: var(--gray-50);
+    }
+
+    .filter-btn.active {
+      background: var(--primary-blue);
+      color: white;
+      border-color: var(--primary-blue);
+    }
+
+    .tasks-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .task-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 4px solid var(--border-color);
+    }
+
+    .task-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .task-card.priority-haute {
+      border-left-color: #dc2626;
+    }
+
+    .task-card.priority-normale {
+      border-left-color: #f59e0b;
+    }
+
+    .task-card.priority-basse {
+      border-left-color: #10b981;
+    }
+
+    .task-card.overdue {
+      background: #fef2f2;
+      border-left-color: #dc2626;
+    }
+
+    .task-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 12px;
+    }
+
+    .task-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .task-description {
+      font-size: 14px;
+      color: var(--gray-600);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .task-meta {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      font-size: 13px;
+      color: var(--gray-500);
+    }
+
+    .task-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .task-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .task-checkbox.checked {
+      background: var(--primary-blue);
+      border-color: var(--primary-blue);
+      position: relative;
+    }
+
+    .task-checkbox.checked::after {
+      content: '✓';
+      position: absolute;
+      color: white;
+      font-size: 14px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-500);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--gray-400);
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-btn:hover {
+      color: var(--gray-600);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <main class="main-content">
+      <div class="tasks-header">
+        <h1 class="page-title">Tâches</h1>
+        <button class="btn btn-primary" onclick="openTaskModal()">
+          ➕ Nouvelle tâche
+        </button>
+      </div>
+
+      <div class="tasks-filters">
+        <button class="filter-btn active" data-filter="all" onclick="filterTasks('all')">
+          Toutes
+        </button>
+        <button class="filter-btn" data-filter="a_faire" onclick="filterTasks('a_faire')">
+          À faire
+        </button>
+        <button class="filter-btn" data-filter="en_cours" onclick="filterTasks('en_cours')">
+          En cours
+        </button>
+        <button class="filter-btn" data-filter="termine" onclick="filterTasks('termine')">
+          Terminées
+        </button>
+        <button class="filter-btn" data-filter="overdue" onclick="filterTasks('overdue')">
+          ⚠️ En retard
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="tasks-grid" id="tasksGrid">
+          <div style="text-align: center; padding: 24px; color: var(--gray-500);">
+            Chargement...
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal d'ajout/édition de tâche -->
+  <div class="modal" id="taskModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Nouvelle tâche</h2>
+        <button class="close-btn" onclick="closeTaskModal()">×</button>
+      </div>
+
+      <form id="taskForm" onsubmit="saveTask(event)">
+        <div class="form-group">
+          <label class="form-label">Titre *</label>
+          <input type="text" id="taskTitle" class="form-input" required placeholder="Ex: Relancer le prospect">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="taskDescription" class="form-textarea" rows="4" placeholder="Détails de la tâche..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Statut</label>
+            <select id="taskStatus" class="form-input">
+              <option value="a_faire">À faire</option>
+              <option value="en_cours">En cours</option>
+              <option value="termine">Terminée</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Priorité</label>
+            <select id="taskPriority" class="form-input">
+              <option value="basse">Basse</option>
+              <option value="normale" selected>Normale</option>
+              <option value="haute">Haute</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Date d'échéance</label>
+            <input type="datetime-local" id="taskDueAt" class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Lead associé</label>
+            <select id="taskLeadId" class="form-input">
+              <option value="">Aucun</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions" style="margin-top: 24px;">
+          <button type="button" class="btn btn-secondary" onclick="closeTaskModal()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/src/lib/api.js"></script>
+  <script src="/src/lib/utils.js"></script>
+  <script src="/src/components/sidebar.js"></script>
+  <script>
+    if (!utils.requireAuth()) throw new Error('Not authenticated');
+
+    const sidebar = new Sidebar('tasks');
+    sidebar.init();
+
+    let allTasks = [];
+    let allLeads = [];
+    let currentFilter = 'all';
+    let editingTaskId = null;
+
+    async function loadTasks() {
+      try {
+        const params = {};
+        if (currentFilter === 'overdue') {
+          params.overdue = 'true';
+        } else if (currentFilter !== 'all') {
+          params.status = currentFilter;
+        }
+
+        const response = await api.getTasks(params);
+        allTasks = response.tasks || [];
+        renderTasks();
+      } catch (error) {
+        console.error('Error loading tasks:', error);
+        utils.showError('Erreur lors du chargement des tâches');
+      }
+    }
+
+    async function loadLeads() {
+      try {
+        const response = await api.getLeads();
+        allLeads = response.leads || [];
+
+        // Remplir le dropdown des leads
+        const select = document.getElementById('taskLeadId');
+        select.innerHTML = '<option value="">Aucun</option>' +
+          allLeads.map(lead =>
+            `<option value="${lead.id}">${lead.full_name || lead.email} - ${lead.company || 'Sans entreprise'}</option>`
+          ).join('');
+      } catch (error) {
+        console.error('Error loading leads:', error);
+      }
+    }
+
+    function renderTasks() {
+      const grid = document.getElementById('tasksGrid');
+
+      if (allTasks.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Aucune tâche</div>
+            <div style="font-size: 14px;">Créez votre première tâche pour commencer</div>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = allTasks.map(task => {
+        const isOverdue = task.due_at && new Date(task.due_at) < new Date() && task.status !== 'termine';
+        const isCompleted = task.status === 'termine';
+        const priorityClass = `priority-${task.priority}`;
+        const overdueClass = isOverdue ? 'overdue' : '';
+
+        return `
+          <div class="task-card ${priorityClass} ${overdueClass}" onclick="openEditTaskModal(${task.id})">
+            <div class="task-header">
+              <div style="flex: 1;">
+                <div class="task-title">${task.title}</div>
+                ${task.lead_name ? `<div style="font-size: 13px; color: var(--gray-500);">📎 ${task.lead_name} ${task.lead_company ? `(${task.lead_company})` : ''}</div>` : ''}
+              </div>
+              <div class="task-checkbox ${isCompleted ? 'checked' : ''}" onclick="toggleTaskStatus(event, ${task.id}, '${task.status}')"></div>
+            </div>
+
+            ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+
+            <div class="task-meta">
+              <div class="task-meta-item">
+                <span class="badge ${utils.getStatusBadgeClass(task.status)}">${utils.getTaskStatusLabel(task.status)}</span>
+              </div>
+              <div class="task-meta-item">
+                <span class="badge badge-${task.priority === 'haute' ? 'red' : task.priority === 'normale' ? 'yellow' : 'green'}">${utils.getPriorityLabel(task.priority)}</span>
+              </div>
+              ${task.due_at ? `
+                <div class="task-meta-item">
+                  ⏰ ${utils.formatDate(task.due_at)}
+                  ${isOverdue ? '<span style="color: #dc2626; font-weight: 600;">⚠️ En retard</span>' : ''}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterTasks(filter) {
+      currentFilter = filter;
+
+      // Mettre à jour les boutons actifs
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+
+      loadTasks();
+    }
+
+    function openTaskModal() {
+      editingTaskId = null;
+      document.getElementById('modalTitle').textContent = 'Nouvelle tâche';
+      document.getElementById('taskForm').reset();
+      document.getElementById('taskModal').classList.add('active');
+    }
+
+    async function openEditTaskModal(taskId) {
+      event.stopPropagation();
+
+      try {
+        const response = await api.getTask(taskId);
+        const task = response.task;
+
+        editingTaskId = taskId;
+        document.getElementById('modalTitle').textContent = 'Modifier la tâche';
+        document.getElementById('taskTitle').value = task.title;
+        document.getElementById('taskDescription').value = task.description || '';
+        document.getElementById('taskStatus').value = task.status;
+        document.getElementById('taskPriority').value = task.priority;
+        document.getElementById('taskLeadId').value = task.lead_id || '';
+
+        if (task.due_at) {
+          // Convertir ISO 8601 en datetime-local format
+          const date = new Date(task.due_at);
+          const localDateTime = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 16);
+          document.getElementById('taskDueAt').value = localDateTime;
+        }
+
+        document.getElementById('taskModal').classList.add('active');
+      } catch (error) {
+        console.error('Error loading task:', error);
+        utils.showError('Erreur lors du chargement de la tâche');
+      }
+    }
+
+    function closeTaskModal() {
+      document.getElementById('taskModal').classList.remove('active');
+      editingTaskId = null;
+    }
+
+    async function saveTask(event) {
+      event.preventDefault();
+
+      const taskData = {
+        title: document.getElementById('taskTitle').value,
+        description: document.getElementById('taskDescription').value || null,
+        status: document.getElementById('taskStatus').value,
+        priority: document.getElementById('taskPriority').value,
+        due_at: document.getElementById('taskDueAt').value || null,
+        lead_id: document.getElementById('taskLeadId').value || null,
+      };
+
+      try {
+        if (editingTaskId) {
+          await api.updateTask(editingTaskId, taskData);
+          utils.showSuccess('Tâche mise à jour');
+        } else {
+          await api.createTask(taskData);
+          utils.showSuccess('Tâche créée');
+        }
+
+        closeTaskModal();
+        loadTasks();
+      } catch (error) {
+        console.error('Error saving task:', error);
+        utils.showError('Erreur lors de l\'enregistrement de la tâche');
+      }
+    }
+
+    async function toggleTaskStatus(event, taskId, currentStatus) {
+      event.stopPropagation();
+
+      const newStatus = currentStatus === 'termine' ? 'a_faire' : 'termine';
+
+      try {
+        await api.updateTask(taskId, { status: newStatus });
+        utils.showSuccess(newStatus === 'termine' ? 'Tâche terminée ✓' : 'Tâche réouverte');
+        loadTasks();
+      } catch (error) {
+        console.error('Error toggling task:', error);
+        utils.showError('Erreur lors de la mise à jour');
+      }
+    }
+
+    // Initialisation
+    loadTasks();
+    loadLeads();
+  </script>
+</body>
+</html>

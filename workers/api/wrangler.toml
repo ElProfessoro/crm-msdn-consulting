@@ -1,0 +1,31 @@
+# ============================================
+# Configuration Cloudflare Workers - API
+# ============================================
+
+name = "crm-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Variables d'environnement
+[vars]
+# JWT_SECRET sera défini via wrangler secret put JWT_SECRET
+
+# Binding D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "crm-database"
+database_id = "07a87dfe-4364-46c3-baa6-b2860e440f3d"
+
+# Binding R2 Bucket (désactivé - activer R2 sur Cloudflare Dashboard)
+# [[r2_buckets]]
+# binding = "R2_BUCKET"
+# bucket_name = "crm-imports"
+
+# Configuration des routes (optionnel)
+# [routes]
+# pattern = "api.crm.msdn-consulting.fr/*"
+# zone_name = "msdn-consulting.fr"
+
+# Limites de ressources (non supportées sur plan gratuit)
+# [limits]
+# cpu_ms = 50

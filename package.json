@@ -1,0 +1,32 @@
+{
+  "name": "crm-msdn-consulting",
+  "version": "1.0.0",
+  "description": "CRM MVP serverless 100% Cloudflare",
+  "private": true,
+  "scripts": {
+    "setup": "npm install --prefix workers/api && npm install --prefix workers/cron",
+    "dev:api": "cd workers/api && npm run dev",
+    "dev:cron": "cd workers/cron && npm run dev",
+    "dev:frontend": "cd frontend && npx serve .",
+    "deploy": "./deploy.sh",
+    "deploy:api": "cd workers/api && wrangler deploy",
+    "deploy:cron": "cd workers/cron && wrangler deploy",
+    "deploy:frontend": "cd frontend && npx wrangler pages deploy . --project-name=crm-frontend",
+    "db:init": "wrangler d1 execute crm-database --file=schema/001_initial_schema.sql",
+    "db:seed": "wrangler d1 execute crm-database --file=schema/002_seed_data.sql",
+    "db:query": "wrangler d1 execute crm-database",
+    "test:cron": "curl -X POST http://localhost:8787/trigger"
+  },
+  "keywords": [
+    "crm",
+    "cloudflare",
+    "workers",
+    "d1",
+    "serverless"
+  ],
+  "author": "MSDN Consulting",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^4.54.0"
+  }
+}

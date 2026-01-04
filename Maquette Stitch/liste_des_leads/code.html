@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Liste des Leads - CRM</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased overflow-hidden">
+<div class="flex h-screen w-full">
+<!-- Sidebar -->
+<aside class="w-64 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151b2b]">
+<div class="p-6">
+<div class="flex flex-col gap-1">
+<h1 class="text-slate-900 dark:text-white text-lg font-bold tracking-tight">CRM MVP</h1>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider">Équipe Commerciale</p>
+</div>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-primary transition-colors">dashboard</span>
+<span class="text-sm font-medium">Tableau de bord</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary dark:text-primary dark:bg-primary/20 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] fill-1">group</span>
+<span class="text-sm font-medium">Leads</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-primary transition-colors">domain</span>
+<span class="text-sm font-medium">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-primary transition-colors">bar_chart</span>
+<span class="text-sm font-medium">Rapports</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="h-9 w-9 rounded-full bg-cover bg-center" data-alt="Portrait of sales representative" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDB0Q2h-g3feRmpBVJjg8m9akrzivseHiKf3A_GIWjEv2pEcsA154_KtLdLZS18fQzmG_D_-9pJGUfjLCWwB7PoVUny9iVJXz8Lmbk-aLZKQM_je6qLR5nXCB_zVDbri1yW1iciLNBjW627DOyqmZ8C3Gw9HGl8JyTkgtuyCT2YTYftAF4kF878OP7enyoDTltPieGqr7nefbAc2PWm2IwflLWCon-cP0cyfnzYUpqDCPiHk1ImvxUGRI5P5oZUBZFJM0QRA2NsvQ');"></div>
+<div class="flex flex-col">
+<p class="text-sm font-medium text-slate-900 dark:text-white">Alex Martin</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Déconnexion</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col h-full overflow-hidden bg-background-light dark:bg-background-dark">
+<!-- Page Heading & Actions -->
+<header class="flex-shrink-0 px-8 py-8">
+<div class="max-w-6xl mx-auto w-full">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div class="flex flex-col gap-1">
+<h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Liste des Leads</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Gérez et suivez l'évolution de votre pipeline de prospection.</p>
+</div>
+<button class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary hover:bg-blue-600 text-white px-5 py-2.5 text-sm font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>Ajouter un lead</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Filters & Data Table Area -->
+<div class="flex-1 overflow-y-auto px-8 pb-8">
+<div class="max-w-6xl mx-auto w-full flex flex-col gap-6">
+<!-- Toolbar -->
+<div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+<!-- Search -->
+<div class="relative w-full max-w-md">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400 text-[20px]">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2.5 border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm shadow-sm" placeholder="Rechercher par nom ou entreprise..." type="text"/>
+</div>
+<!-- Status Filters (Chips) -->
+<div class="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0 w-full lg:w-auto no-scrollbar">
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium transition-colors shadow-sm">
+                                Tous
+                            </button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium transition-colors">
+                                Nouveau
+                            </button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium transition-colors">
+                                En cours
+                            </button>
+<button class="whitespace-nowrap px-4 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium transition-colors">
+                                Gagné
+                            </button>
+</div>
+</div>
+<!-- Table Container -->
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-12">
+<!-- Checkbox/Avatar placeholder header -->
+</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                            Nom du lead
+                                        </th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                            Entreprise
+                                        </th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                            Statut
+                                        </th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                            Dernière activité
+                                        </th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
+                                            Actions
+                                        </th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+<!-- Row 1 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+<td class="px-6 py-4">
+<div class="h-10 w-10 rounded-full bg-cover bg-center ring-2 ring-white dark:ring-slate-800" data-alt="Avatar of Sophie Martin" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAmkgmi6_mvCdkBMw7CrsSCvPNCN_6doKLMrsie3pve2AWMd29CWczYDl6KHIpIKXsTfDb6Ws_d_d4Ma0sW3btljI8bfl7klhzqRH_YoBVzVSV-A8HwmjMouVB87hg_MRxPthxYFb9lK8D0aPXdItDprfiJJOQs4_qszpVEbjF5rg7IPzc7RxTds6UYJQvXXbRyhCyh-Y8iAJy0IRoilxGQLyIOzdUpnQvT3i34xXy0uhrxsmdJ8I1JAFNGJ0s7fJ19EJ0BpPwNSg');"></div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Sophie Martin</span>
+<span class="text-xs text-slate-500 dark:text-slate-400 md:hidden">TechSolutions</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                                            TechSolutions
+                                        </td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                Nouveau
+                                            </span>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                                            Il y a 2h
+                                        </td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium flex items-center gap-1 justify-end ml-auto">
+<span>Voir</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+<td class="px-6 py-4">
+<div class="h-10 w-10 rounded-full bg-cover bg-center ring-2 ring-white dark:ring-slate-800" data-alt="Avatar of Jean Dupont" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCpmNU67pClxQSksipdDG24dRODXDyIDj4hOJ9mIvBObGAAfwvbOV5qE9S2_1eztp6k04KFEKYbWY_7rQdTLm3MjAtT9WenZCzH1P4j0n6Sr-Gnw2Ovil48b3tbTjRPZ3ZdQNHvPiOZrLfbrz3tEVkXQSZVd2LAQq7nZO_52xeOuzqHKMa0W1S_19VqG5vXDfYiAL3uHyugxd1KqrZoIDmfDDWQSiUTF1Q7A2OeN27dmAHym4aYVEqzJRJ920l8j3Ju0qd_uFwhCQ');"></div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Jean Dupont</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                                            Dupont SA
+                                        </td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+                                                En cours
+                                            </span>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                                            Hier
+                                        </td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium flex items-center gap-1 justify-end ml-auto">
+<span>Voir</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+<td class="px-6 py-4">
+<div class="h-10 w-10 rounded-full bg-cover bg-center ring-2 ring-white dark:ring-slate-800" data-alt="Avatar of Marie Curie" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAdjdZvHmunx9WtpS5WZUgoDvY4UWGPXDvWy6cG0nItaAo9VUQzpi_pSlyfPuhEklsKpV5aFQl7p4vuiv0Dx-q51ZX8h9PtqvLt7oX1NHEUDyGPPQZTsINBlfk3WI5-PGl7fhxz88TpE3teAvohel3bfm5ALOHVU1hZrKcJpBnzNqY3oBJT7R8bu5d1muWpE86_2eYSXP4QdyZ2zrUWUHb0pPQ6Qp4STzEGDnNHdou6jRwTjJ-k80dd_RvjY_CU49O1F8FVVCwc_g');"></div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Marie Curie</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                                            Science Corp
+                                        </td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                                Gagné
+                                            </span>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                                            Il y a 3j
+                                        </td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium flex items-center gap-1 justify-end ml-auto">
+<span>Voir</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+<td class="px-6 py-4">
+<div class="h-10 w-10 rounded-full bg-cover bg-center ring-2 ring-white dark:ring-slate-800" data-alt="Avatar of Lucas Bernard" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB6IMwD8PZvHCB9fHv-IpHL66wW3XgfovYZcCb_VN9tHTsJx8ZWNXDAPkSFDUY54i1voyr_n9QlnVex5y9xFzr9H_4flbwA5Cyv8Xh95aoTTdSswlMetLuWGKb8zfHaKS6AruLep1MrvBZOPz5RTkAG_eN3McDKSXKqdKXIhMlBUXMXba2KzNC34IPeyvQXZ6Wq81yPVLdaItK-R1MgLF5MRyNbH9Inkfq3Q3fGtWKzHc0Gni7xxViAINVfUrYfedlyq0qW0vQtkw');"></div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Lucas Bernard</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                                            Innovatech
+                                        </td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                Nouveau
+                                            </span>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                                            Il y a 5j
+                                        </td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium flex items-center gap-1 justify-end ml-auto">
+<span>Voir</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+<td class="px-6 py-4">
+<div class="h-10 w-10 rounded-full bg-cover bg-center ring-2 ring-white dark:ring-slate-800" data-alt="Avatar of Emma Petit" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDMSAkvHIf26hGAl2yhfWnj63ZAonIyc1NxEAvFt5swo7ONaecKoo-zPmyhah-FuJ-1sKsviEzfO3uR8qzVybs2erS8aGUrW8wmE-vi0E19g2cwbsgwZDrySgBV1vScRfKA5e1txHYqP5LdoFo6AYFUji15A1iM2nFnyi_goi3_2E9WZlJ1NOdBngib4aVwf6xiyCffK7q78OdtZP8IFcmp_G714LM5OdyoPHIZH2muc3rGA2UZsIwHgWSq3lMMa1aeO3G8l_rrAA');"></div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Emma Petit</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                                            Green Energy
+                                        </td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                                                Perdu
+                                            </span>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                                            Il y a 1sem
+                                        </td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium flex items-center gap-1 justify-end ml-auto">
+<span>Voir</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+<div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+<div>
+<p class="text-sm text-slate-500 dark:text-slate-400">
+                                        Affichage de <span class="font-medium">1</span> à <span class="font-medium">5</span> sur <span class="font-medium">20</span> résultats
+                                    </p>
+</div>
+<div>
+<nav aria-label="Pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+<a class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700" href="#">
+<span class="sr-only">Précédent</span>
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</a>
+<a aria-current="page" class="z-10 bg-primary/10 dark:bg-primary/20 border-primary text-primary relative inline-flex items-center px-4 py-2 border text-sm font-medium" href="#">
+                                            1
+                                        </a>
+<a class="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 relative inline-flex items-center px-4 py-2 border text-sm font-medium" href="#">
+                                            2
+                                        </a>
+<a class="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 relative inline-flex items-center px-4 py-2 border text-sm font-medium" href="#">
+                                            3
+                                        </a>
+<span class="relative inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-400">
+                                            ...
+                                        </span>
+<a class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700" href="#">
+<span class="sr-only">Suivant</span>
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</a>
+</nav>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

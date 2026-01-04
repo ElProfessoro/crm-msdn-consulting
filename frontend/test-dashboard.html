@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Dashboard API</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .result {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .success { border-left: 4px solid #22c55e; }
+    .error { border-left: 4px solid #ef4444; }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    input {
+      padding: 8px;
+      margin: 5px;
+      width: 300px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    h2 {
+      color: #1e40af;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Test Dashboard API - CRM MSDN Consulting</h1>
+
+  <div class="test-section">
+    <h2>1. Login</h2>
+    <input type="email" id="email" placeholder="Email" value="msalla.youssef@gmail.com">
+    <input type="password" id="password" placeholder="Mot de passe" value="Rsk0405$?G6677">
+    <button onclick="testLogin()">Test Login</button>
+    <div id="loginResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>2. Dashboard Stats</h2>
+    <button onclick="testStats()">Test Stats</button>
+    <div id="statsResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>3. Priority Tasks</h2>
+    <button onclick="testPriorityTasks()">Test Priority Tasks</button>
+    <div id="tasksResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>4. Recent Leads</h2>
+    <button onclick="testRecentLeads()">Test Recent Leads</button>
+    <div id="leadsResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>5. Recent Activities</h2>
+    <button onclick="testActivities()">Test Activities</button>
+    <div id="activitiesResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>6. Next Appointment</h2>
+    <button onclick="testAppointment()">Test Appointment</button>
+    <div id="appointmentResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>7. All Dashboard Data (like dashboard.html)</h2>
+    <button onclick="testAllDashboard()">Test All Dashboard</button>
+    <div id="allResult" class="result"></div>
+  </div>
+
+  <script src="/src/lib/api.js"></script>
+  <script>
+    let token = localStorage.getItem('token');
+
+    function displayResult(elementId, data, success = true) {
+      const element = document.getElementById(elementId);
+      element.className = `result ${success ? 'success' : 'error'}`;
+      element.textContent = typeof data === 'object'
+        ? JSON.stringify(data, null, 2)
+        : data;
+    }
+
+    async function testLogin() {
+      try {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const result = await api.login(email, password);
+        token = result.token;
+        displayResult('loginResult', {
+          success: true,
+          user: result.user,
+          token: result.token.substring(0, 50) + '...'
+        });
+      } catch (error) {
+        displayResult('loginResult', { error: error.message }, false);
+      }
+    }
+
+    async function testStats() {
+      try {
+        const result = await api.getDashboardStats();
+        displayResult('statsResult', result);
+      } catch (error) {
+        displayResult('statsResult', { error: error.message }, false);
+      }
+    }
+
+    async function testPriorityTasks() {
+      try {
+        const result = await api.getPriorityTasks();
+        displayResult('tasksResult', result);
+      } catch (error) {
+        displayResult('tasksResult', { error: error.message }, false);
+      }
+    }
+
+    async function testRecentLeads() {
+      try {
+        const result = await api.getRecentLeads();
+        displayResult('leadsResult', {
+          count: result.leads.length,
+          leads: result.leads.slice(0, 3) // Montrer seulement les 3 premiers
+        });
+      } catch (error) {
+        displayResult('leadsResult', { error: error.message }, false);
+      }
+    }
+
+    async function testActivities() {
+      try {
+        const result = await api.getRecentActivities();
+        displayResult('activitiesResult', result);
+      } catch (error) {
+        displayResult('activitiesResult', { error: error.message }, false);
+      }
+    }
+
+    async function testAppointment() {
+      try {
+        const result = await api.getNextAppointment();
+        displayResult('appointmentResult', result);
+      } catch (error) {
+        displayResult('appointmentResult', { error: error.message }, false);
+      }
+    }
+
+    async function testAllDashboard() {
+      try {
+        displayResult('allResult', 'Chargement de toutes les données du dashboard...', true);
+
+        const [stats, tasks, leads, activities, appointment, user] = await Promise.all([
+          api.getDashboardStats(),
+          api.getPriorityTasks(),
+          api.getRecentLeads(),
+          api.getRecentActivities(),
+          api.getNextAppointment(),
+          api.getMe(),
+        ]);
+
+        displayResult('allResult', {
+          success: true,
+          message: 'Toutes les requêtes ont réussi!',
+          data: {
+            user: user.user,
+            stats: stats.stats,
+            tasksCount: tasks.tasks.length,
+            leadsCount: leads.leads.length,
+            activitiesCount: activities.activities.length,
+            hasAppointment: !!appointment.appointment
+          }
+        });
+      } catch (error) {
+        displayResult('allResult', {
+          error: error.message,
+          stack: error.stack
+        }, false);
+      }
+    }
+
+    // Auto-populate si token existe
+    if (token) {
+      displayResult('loginResult', {
+        message: 'Token trouvé dans localStorage',
+        token: token.substring(0, 50) + '...'
+      });
+    }
+  </script>
+</body>
+</html>

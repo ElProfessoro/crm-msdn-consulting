@@ -1,0 +1,21 @@
+# ============================================
+# Configuration Cloudflare Workers - Cron
+# ============================================
+
+name = "crm-cron"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Cron Triggers - Exécution toutes les 15 minutes
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Binding D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "crm-database"
+database_id = "07a87dfe-4364-46c3-baa6-b2860e440f3d"
+
+# Limites de ressources (non supportées sur plan gratuit)
+# [limits]
+# cpu_ms = 50

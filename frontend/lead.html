@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lead - CRM Connect</title>
+  <link rel="stylesheet" href="/src/styles/global.css">
+  <style>
+    .lead-layout {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 24px;
+    }
+
+    .lead-profile {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+    }
+
+    .profile-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .profile-avatar-large {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      object-fit: cover;
+      position: relative;
+      background-color: var(--gray-200);
+    }
+
+    .online-indicator {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 16px;
+      height: 16px;
+      background-color: #22c55e;
+      border: 3px solid white;
+      border-radius: 50%;
+    }
+
+    .profile-name {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .profile-position {
+      font-size: 14px;
+      color: var(--gray-600);
+      margin-bottom: 8px;
+    }
+
+    .profile-company {
+      font-size: 14px;
+      color: var(--primary-blue);
+      margin-bottom: 16px;
+    }
+
+    .profile-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .info-item {
+      margin-bottom: 16px;
+    }
+
+    .info-label {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 14px;
+      color: var(--gray-900);
+      word-break: break-all;
+    }
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      padding: 4px 12px;
+      background-color: var(--gray-100);
+      border-radius: 12px;
+      font-size: 12px;
+      color: var(--gray-700);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 24px;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      padding: 12px 0;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+    }
+
+    .tab.active {
+      color: var(--primary-blue);
+      border-bottom-color: var(--primary-blue);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .activity-input {
+      background-color: var(--gray-50);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .activity-input textarea {
+      width: 100%;
+      border: none;
+      background: transparent;
+      resize: none;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      outline: none;
+      min-height: 60px;
+    }
+
+    .activity-input-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .timeline {
+      position: relative;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .timeline-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+
+    .timeline-content {
+      flex: 1;
+      background: var(--gray-50);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+    }
+
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+
+    .timeline-title {
+      font-weight: 600;
+      color: var(--gray-900);
+      font-size: 14px;
+    }
+
+    .timeline-author {
+      font-size: 13px;
+      color: var(--gray-600);
+    }
+
+    .timeline-time {
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+
+    .timeline-description {
+      font-size: 14px;
+      color: var(--gray-700);
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+
+    .breadcrumb {
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: var(--gray-600);
+    }
+
+    .breadcrumb a {
+      color: var(--primary-blue);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <main class="main-content">
+      <div class="breadcrumb">
+        <a href="/leads.html">Leads</a> &gt; <span id="breadcrumbName">...</span>
+      </div>
+
+      <div class="lead-layout">
+        <!-- Colonne gauche - Profil -->
+        <div class="lead-profile">
+          <div class="profile-header">
+            <div style="position: relative; display: inline-block;">
+              <img id="profileAvatar" src="" alt="" class="profile-avatar-large" onerror="this.style.display='none'; document.getElementById('profileAvatarFallback').style.display='flex';">
+              <div id="profileAvatarFallback" class="profile-avatar-large" style="display: none; align-items: center; justify-content: center; font-weight: 700; font-size: 48px; color: white;"></div>
+            </div>
+            <h2 class="profile-name" id="profileName">-</h2>
+            <div class="profile-position" id="profilePosition">-</div>
+            <div class="profile-company" id="profileCompany">-</div>
+            <div>
+              <span class="badge" id="profileStatus">-</span>
+            </div>
+          </div>
+
+          <div class="profile-actions">
+            <button class="btn btn-primary" onclick="sendEmail()">
+              📧 Envoyer un e-mail
+            </button>
+            <button class="btn btn-secondary" onclick="makeCall()">
+              📞 Appeler
+            </button>
+          </div>
+
+          <div class="section-label">Coordonnées</div>
+          <div class="info-item">
+            <div class="info-label">EMAIL</div>
+            <div class="info-value" id="contactEmail">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">TÉLÉPHONE</div>
+            <div class="info-value" id="contactPhone">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">ENTREPRISE</div>
+            <div class="info-value" id="contactCompany">-</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">LINKEDIN</div>
+            <div class="info-value" id="contactLinkedin">-</div>
+          </div>
+
+          <div class="section-label" style="margin-top: 24px;">STATUT</div>
+          <div class="info-item">
+            <select id="leadStatus" onchange="changeLeadStatus()" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; background: white;">
+              <option value="nouveau">🆕 Nouveau</option>
+              <option value="en_cours">🔄 En cours</option>
+              <option value="gagne">🏆 Gagné</option>
+              <option value="perdu">❌ Perdu</option>
+            </select>
+          </div>
+
+          <div class="section-label" style="margin-top: 24px;">TAGS</div>
+          <div class="tags-container" id="tagsContainer">-</div>
+
+          <!-- Section de réassignation (visible uniquement pour les admins) -->
+          <div id="reassignSection" style="display: none; margin-top: 32px;">
+            <div class="section-label">ASSIGNATION</div>
+            <div class="info-item">
+              <div class="info-label">ASSIGNÉ À</div>
+              <select id="assignedUser" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; margin-top: 4px;">
+                <option value="">Chargement...</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="reassignLead()" style="width: 100%; margin-top: 8px;">
+              🔄 Réassigner
+            </button>
+          </div>
+        </div>
+
+        <!-- Colonne droite - Historique -->
+        <div>
+          <div class="card">
+            <div class="tabs">
+              <div class="tab active" data-tab="historique">Historique</div>
+              <div class="tab" data-tab="notes">Notes</div>
+              <div class="tab" data-tab="taches">Tâches</div>
+            </div>
+
+            <div class="tab-content active" id="historique">
+              <div class="activity-input">
+                <textarea
+                  placeholder="Ajouter une note ou consigner un appel..."
+                  id="noteInput"
+                ></textarea>
+                <div class="activity-input-actions">
+                  <button class="btn btn-secondary" style="font-size: 13px; padding: 6px 12px;">📎</button>
+                  <button class="btn btn-secondary" style="font-size: 13px; padding: 6px 12px;">@</button>
+                  <button class="btn btn-secondary" style="font-size: 13px; padding: 6px 12px;">B</button>
+                  <button class="btn btn-primary" style="font-size: 13px; padding: 6px 16px;" onclick="saveNote()">
+                    Enregistrer
+                  </button>
+                </div>
+              </div>
+
+              <div class="timeline" id="timeline">
+                <div style="text-align: center; padding: 24px; color: var(--gray-500);">
+                  Chargement...
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-content" id="notes">
+              Notes à venir...
+            </div>
+
+            <div class="tab-content" id="taches">
+              <div style="margin-bottom: 16px;">
+                <button class="btn btn-primary btn-sm" onclick="addTaskForLead()">
+                  ➕ Nouvelle tâche
+                </button>
+              </div>
+
+              <div id="leadTasks">
+                <div style="text-align: center; padding: 24px; color: var(--gray-500);">
+                  Chargement...
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal de création de tâche pour ce lead -->
+  <div class="modal" id="leadTaskModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: white; border-radius: 12px; padding: 32px; width: 90%; max-width: 500px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h3 style="font-size: 18px; font-weight: 600; margin: 0;">Nouvelle tâche</h3>
+        <button onclick="closeLeadTaskModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--gray-400);">×</button>
+      </div>
+
+      <form id="leadTaskForm" onsubmit="saveLeadTask(event)">
+        <div class="form-group">
+          <label class="form-label">Titre *</label>
+          <input type="text" id="leadTaskTitle" class="form-input" required placeholder="Ex: Relancer par email">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="leadTaskDescription" class="form-textarea" rows="3"></textarea>
+        </div>
+
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Priorité</label>
+            <select id="leadTaskPriority" class="form-input">
+              <option value="basse">Basse</option>
+              <option value="normale" selected>Normale</option>
+              <option value="haute">Haute</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Date d'échéance</label>
+            <input type="date" id="leadTaskDueAt" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-actions" style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="closeLeadTaskModal()">Annuler</button>
+          <button type="submit" class="btn btn-primary">Créer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/src/lib/api.js"></script>
+  <script src="/src/lib/utils.js"></script>
+  <script src="/src/components/sidebar.js"></script>
+  <script>
+    if (!utils.requireAuth()) throw new Error('Not authenticated');
+
+    const sidebar = new Sidebar('leads');
+    sidebar.init();
+
+    const leadId = new URLSearchParams(window.location.search).get('id');
+    let currentLead = null;
+    let currentUser = null;
+    let allUsers = [];
+
+    if (!leadId) {
+      window.location.href = '/leads.html';
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    async function loadLead() {
+      try {
+        const [leadResponse, activitiesResponse, userResponse] = await Promise.all([
+          api.getLead(leadId),
+          api.getLeadActivities(leadId),
+          api.getMe()
+        ]);
+
+        currentLead = leadResponse.lead;
+        currentUser = userResponse.user;
+        renderLead(currentLead);
+        renderActivities(activitiesResponse.activities);
+
+        // Charger les utilisateurs si admin
+        if (currentUser.role === 'admin') {
+          await loadUsers();
+        }
+      } catch (error) {
+        console.error('Error loading lead:', error);
+        utils.showError('Erreur lors du chargement du lead');
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const data = await api.getUsers();
+        allUsers = data.users || [];
+
+        // Afficher la section de réassignation
+        document.getElementById('reassignSection').style.display = 'block';
+
+        // Remplir le dropdown
+        const select = document.getElementById('assignedUser');
+        select.innerHTML = allUsers.map(user =>
+          `<option value="${user.id}" ${user.id === currentLead.user_id ? 'selected' : ''}>
+            ${user.first_name} ${user.last_name} ${user.role === 'admin' ? '(Admin)' : ''}
+          </option>`
+        ).join('');
+      } catch (error) {
+        console.error('Error loading users:', error);
+        // Ne pas afficher d'erreur, juste masquer la section
+      }
+    }
+
+    function renderLead(lead) {
+      // Générer les initiales et couleur pour l'avatar
+      const initials = utils.getInitials(lead.first_name, lead.last_name);
+      const colors = ['#2563eb', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#16a34a', '#0891b2', '#4f46e5'];
+      const bgColor = colors[lead.id % colors.length];
+
+      document.getElementById('breadcrumbName').textContent = lead.full_name || lead.email;
+
+      // Afficher l'avatar avec initiales
+      document.getElementById('profileAvatar').style.display = 'none';
+      const fallback = document.getElementById('profileAvatarFallback');
+      fallback.style.display = 'flex';
+      fallback.style.backgroundColor = bgColor;
+      fallback.textContent = initials;
+
+      document.getElementById('profileName').textContent = lead.full_name || '-';
+      document.getElementById('profilePosition').textContent = lead.position || '-';
+
+      // Extraire le lien LinkedIn de l'entreprise depuis les notes
+      let companyLinkedinUrl = null;
+      if (lead.notes) {
+        const match = lead.notes.match(/LinkedIn Entreprise:\s*(https:\/\/[^\s\n]+)/);
+        if (match) {
+          companyLinkedinUrl = match[1];
+        }
+      }
+
+      document.getElementById('profileCompany').innerHTML = lead.company
+        ? (companyLinkedinUrl
+            ? `<a href="${companyLinkedinUrl}" target="_blank" rel="noopener noreferrer">${lead.company}</a>`
+            : lead.company)
+        : '-';
+
+      const statusBadge = document.getElementById('profileStatus');
+      statusBadge.textContent = utils.getStatusLabel(lead.status);
+      statusBadge.className = `badge ${utils.getStatusBadgeClass(lead.status)}`;
+
+      // Mettre à jour le dropdown de statut
+      document.getElementById('leadStatus').value = lead.status;
+
+      document.getElementById('contactEmail').textContent = lead.email || '-';
+      document.getElementById('contactPhone').textContent = lead.phone || '-';
+      document.getElementById('contactCompany').textContent = lead.company || '-';
+      document.getElementById('contactLinkedin').innerHTML = lead.linkedin_url
+        ? `<a href="${lead.linkedin_url}" target="_blank">${lead.linkedin_url}</a>`
+        : '-';
+
+      const tags = utils.parseTags(lead.tags);
+      document.getElementById('tagsContainer').innerHTML = tags.length > 0
+        ? tags.map(tag => `<span class="tag">${tag}</span>`).join('')
+        : '<span style="color: var(--gray-500); font-size: 13px;">Aucun tag</span>';
+    }
+
+    function renderActivities(activities) {
+      const timeline = document.getElementById('timeline');
+
+      if (!activities || activities.length === 0) {
+        timeline.innerHTML = `
+          <div style="text-align: center; padding: 24px; color: var(--gray-500);">
+            Aucune activité
+          </div>
+        `;
+        return;
+      }
+
+      const icons = {
+        call_made: { icon: '📞', bg: '#dbeafe', color: '#2563eb' },
+        email_sent: { icon: '📧', bg: '#dbeafe', color: '#2563eb' },
+        note_added: { icon: '📝', bg: '#f3e8ff', color: '#9333ea' },
+        status_changed: { icon: '🔄', bg: '#dcfce7', color: '#22c55e' },
+        lead_created: { icon: '✨', bg: '#fef3c7', color: '#d97706' },
+        task_created: { icon: '✓', bg: '#dbeafe', color: '#2563eb' },
+        lead_reassigned: { icon: '👥', bg: '#fef3c7', color: '#f59e0b' },
+      };
+
+      timeline.innerHTML = activities.map(activity => {
+        const style = icons[activity.activity_type] || icons.note_added;
+        return `
+          <div class="timeline-item">
+            <div class="timeline-icon" style="background-color: ${style.bg}; color: ${style.color};">
+              ${style.icon}
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-header">
+                <div>
+                  <div class="timeline-title">${activity.title}</div>
+                  <div class="timeline-author">${activity.first_name} ${activity.last_name}</div>
+                </div>
+                <div class="timeline-time">${utils.formatRelativeTime(activity.created_at)}</div>
+              </div>
+              ${activity.description ? `<div class="timeline-description">${activity.description}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function saveNote() {
+      const noteInput = document.getElementById('noteInput');
+      const note = noteInput.value.trim();
+
+      if (!note) {
+        utils.showError('Veuillez saisir une note');
+        return;
+      }
+
+      try {
+        await api.addLeadActivity(leadId, {
+          activity_type: 'note_added',
+          title: 'Note ajoutée',
+          description: note
+        });
+
+        noteInput.value = '';
+        utils.showSuccess('Note ajoutée');
+        loadLead();
+      } catch (error) {
+        console.error('Error saving note:', error);
+        utils.showError('Erreur lors de l\'ajout de la note');
+      }
+    }
+
+    function sendEmail() {
+      if (currentLead?.email) {
+        window.location.href = `mailto:${currentLead.email}`;
+      } else {
+        utils.showError('Aucun email disponible');
+      }
+    }
+
+    function makeCall() {
+      if (currentLead?.phone) {
+        window.location.href = `tel:${currentLead.phone}`;
+      } else {
+        utils.showError('Aucun téléphone disponible');
+      }
+    }
+
+    async function changeLeadStatus() {
+      const newStatus = document.getElementById('leadStatus').value;
+      const oldStatus = currentLead.status;
+
+      if (newStatus === oldStatus) {
+        return; // Pas de changement
+      }
+
+      try {
+        const response = await fetch(`${api.API_URL}/leads/${leadId}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Erreur lors du changement de statut');
+        }
+
+        const data = await response.json();
+        currentLead = data.lead;
+
+        // Mettre à jour le badge de statut
+        const statusBadge = document.getElementById('profileStatus');
+        statusBadge.textContent = utils.getStatusLabel(newStatus);
+        statusBadge.className = `badge ${utils.getStatusBadgeClass(newStatus)}`;
+
+        utils.showSuccess(`Statut changé: ${utils.getStatusLabel(oldStatus)} → ${utils.getStatusLabel(newStatus)}`);
+
+        // Recharger les activités pour voir la notification de changement de statut
+        const activitiesResponse = await api.getLeadActivities(leadId);
+        renderActivities(activitiesResponse.activities);
+      } catch (error) {
+        console.error('Error changing status:', error);
+        utils.showError(error.message || 'Erreur lors du changement de statut');
+        // Remettre l'ancien statut en cas d'erreur
+        document.getElementById('leadStatus').value = oldStatus;
+      }
+    }
+
+    async function reassignLead() {
+      const select = document.getElementById('assignedUser');
+      const newUserId = parseInt(select.value);
+
+      if (newUserId === currentLead.user_id) {
+        utils.showError('Le lead est déjà assigné à cet utilisateur');
+        return;
+      }
+
+      if (!confirm('Êtes-vous sûr de vouloir réassigner ce lead ?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${api.API_URL}/leads/${leadId}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ user_id: newUserId })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Erreur lors de la réassignation');
+        }
+
+        const data = await response.json();
+        currentLead = data.lead;
+
+        utils.showSuccess('Lead réassigné avec succès');
+
+        // Recharger les activités pour voir la notification de réassignation
+        const activitiesResponse = await api.getLeadActivities(leadId);
+        renderActivities(activitiesResponse.activities);
+      } catch (error) {
+        console.error('Error reassigning lead:', error);
+        utils.showError(error.message || 'Erreur lors de la réassignation');
+      }
+    }
+
+    async function loadLeadTasks() {
+      try {
+        const response = await api.getTasks({ lead_id: leadId });
+        const tasks = response.tasks || [];
+
+        const container = document.getElementById('leadTasks');
+
+        if (tasks.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 32px; color: var(--gray-500);">
+              <div style="font-size: 32px; margin-bottom: 8px;">📋</div>
+              <div>Aucune tâche pour ce lead</div>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = tasks.map(task => {
+          const isOverdue = task.due_at && new Date(task.due_at) < new Date() && task.status !== 'termine';
+          const isCompleted = task.status === 'termine';
+
+          return `
+            <div style="padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; ${isOverdue ? 'background: #fef2f2; border-left: 4px solid #dc2626;' : ''}">
+              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                <div style="flex: 1;">
+                  <div style="font-weight: 600; color: var(--gray-900); ${isCompleted ? 'text-decoration: line-through; color: var(--gray-500);' : ''}">${task.title}</div>
+                  ${task.description ? `<div style="font-size: 13px; color: var(--gray-600); margin-top: 4px;">${task.description}</div>` : ''}
+                </div>
+                <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="toggleLeadTaskStatus(${task.id}, '${task.status}')" style="cursor: pointer;">
+              </div>
+              <div style="display: flex; gap: 12px; font-size: 12px; color: var(--gray-500);">
+                <span class="badge ${utils.getStatusBadgeClass(task.status)}">${utils.getTaskStatusLabel(task.status)}</span>
+                <span class="badge badge-${task.priority === 'haute' ? 'red' : task.priority === 'normale' ? 'yellow' : 'green'}">${utils.getPriorityLabel(task.priority)}</span>
+                ${task.due_at ? `<span>⏰ ${utils.formatDate(task.due_at)}${isOverdue ? ' <span style="color: #dc2626;">⚠️ En retard</span>' : ''}</span>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Error loading lead tasks:', error);
+      }
+    }
+
+    function addTaskForLead() {
+      document.getElementById('leadTaskModal').style.display = 'flex';
+      document.getElementById('leadTaskForm').reset();
+    }
+
+    function closeLeadTaskModal() {
+      document.getElementById('leadTaskModal').style.display = 'none';
+    }
+
+    async function saveLeadTask(event) {
+      event.preventDefault();
+
+      const taskData = {
+        title: document.getElementById('leadTaskTitle').value,
+        description: document.getElementById('leadTaskDescription').value || null,
+        priority: document.getElementById('leadTaskPriority').value,
+        due_at: document.getElementById('leadTaskDueAt').value || null,
+        lead_id: parseInt(leadId),
+        status: 'a_faire'
+      };
+
+      try {
+        await api.createTask(taskData);
+        utils.showSuccess('Tâche créée');
+        closeLeadTaskModal();
+        loadLeadTasks();
+
+        // Recharger les activités pour voir la nouvelle tâche
+        const activitiesResponse = await api.getLeadActivities(leadId);
+        renderActivities(activitiesResponse.activities);
+      } catch (error) {
+        console.error('Error creating task:', error);
+        utils.showError('Erreur lors de la création de la tâche');
+      }
+    }
+
+    async function toggleLeadTaskStatus(taskId, currentStatus) {
+      const newStatus = currentStatus === 'termine' ? 'a_faire' : 'termine';
+
+      try {
+        await api.updateTask(taskId, { status: newStatus });
+        utils.showSuccess(newStatus === 'termine' ? 'Tâche terminée ✓' : 'Tâche réouverte');
+        loadLeadTasks();
+
+        // Recharger les activités
+        const activitiesResponse = await api.getLeadActivities(leadId);
+        renderActivities(activitiesResponse.activities);
+      } catch (error) {
+        console.error('Error updating task:', error);
+        utils.showError('Erreur lors de la mise à jour');
+      }
+    }
+
+    // Charger les tâches quand l'onglet Tâches est ouvert
+    document.querySelectorAll('.tab').forEach(tab => {
+      const originalClickHandler = tab.onclick;
+      tab.onclick = function() {
+        if (originalClickHandler) originalClickHandler.call(this);
+        if (this.dataset.tab === 'taches') {
+          loadLeadTasks();
+        }
+      };
+    });
+
+    loadLead();
+  </script>
+</body>
+</html>
