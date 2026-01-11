@@ -768,7 +768,7 @@
                   <div class="timeline-title">${activity.title}${statusBadge}</div>
                   <div class="timeline-author">${activity.first_name} ${activity.last_name}</div>
                 </div>
-                <div class="timeline-time">${utils.formatRelativeTime(activity.created_at)}</div>
+                <div class="timeline-time">${utils.formatDateTime(activity.created_at)}</div>
               </div>
               ${activity.description ? `<div class="timeline-description">${activity.description}</div>` : ''}
               ${callDuration}
