@@ -17,31 +17,34 @@ class RingoverIntegration {
 
   // Initialiser le SDK RingOver
   init() {
-    if (this.initialized || !window.RingoverSDK) {
+    if (this.initialized) {
       return;
     }
 
     try {
-      // Créer l'instance du SDK avec configuration
-      this.sdk = new window.RingoverSDK({
-        type: 'fixed',
-        size: 'medium',
-        animation: true,
-        border: false,
-        trayicon: true,
-        backgroundColor: 'transparent'
-      });
+      // Essayer d'initialiser le SDK si disponible
+      if (window.RingoverSDK) {
+        this.sdk = new window.RingoverSDK({
+          type: 'fixed',
+          size: 'medium',
+          animation: true,
+          border: false,
+          trayicon: true,
+          backgroundColor: 'transparent'
+        });
 
-      // Écouter les événements d'appel
-      this.setupEventListeners();
+        // Écouter les événements d'appel
+        this.setupEventListeners();
+        console.log('RingOver SDK initialized');
+      }
 
-      // Démarrer le polling automatique
+      // Démarrer le polling automatique (fonctionne avec ou sans SDK)
       this.startPolling();
 
       this.initialized = true;
-      console.log('RingOver SDK initialized with polling');
+      console.log('RingOver polling started');
     } catch (error) {
-      console.error('Failed to initialize RingOver SDK:', error);
+      console.error('Failed to initialize RingOver:', error);
     }
   }
 
@@ -343,38 +346,44 @@ class RingoverIntegration {
 
   // Synchroniser les appels en attente
   async syncPendingCalls() {
-    if (this.pendingCallIds.size === 0) {
-      return;
-    }
-
     try {
-      console.log('Syncing pending calls:', Array.from(this.pendingCallIds));
+      // Si on est sur la page d'un lead, chercher les appels "ringing"
+      if (window.location.pathname.includes('lead.html')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const leadId = urlParams.get('id');
 
-      // Récupérer l'historique des appels RingOver
-      const result = await this.api.getRingoverCalls();
-      const calls = result.calls || [];
+        if (leadId) {
+          // Récupérer les activités du lead
+          const activities = await this.api.getLeadActivities(leadId);
 
-      // Pour chaque appel en attente, vérifier s'il est terminé
-      for (const pendingCallId of this.pendingCallIds) {
-        const call = calls.find(c => String(c.call_id) === pendingCallId);
+          // Trouver les activités avec call_status = 'ringing'
+          const pendingCalls = activities.filter(act =>
+            act.call_status === 'ringing' && act.call_id
+          );
 
-        if (call) {
-          // Vérifier si l'appel est terminé (a une durée)
-          if (call.duration && call.duration > 0) {
-            console.log(`Call ${pendingCallId} is completed, updating...`);
+          if (pendingCalls.length > 0) {
+            console.log(`Found ${pendingCalls.length} pending calls, syncing...`);
 
-            // Trouver le lead associé
-            const leadId = await this.findLeadIdByCallId(pendingCallId);
+            // Récupérer l'historique des appels RingOver
+            const result = await this.api.getRingoverCalls();
+            const calls = result.calls || [];
 
-            if (leadId) {
-              // Mettre à jour l'activité avec les détails finaux
-              await this.updateCallWithDetails(leadId, pendingCallId, call);
+            // Pour chaque appel en attente
+            for (const activity of pendingCalls) {
+              const callId = activity.call_id;
 
-              // Retirer de la liste des appels en attente
-              this.pendingCallIds.delete(pendingCallId);
+              // Chercher l'appel dans l'historique RingOver
+              const call = calls.find(c => String(c.call_id) === String(callId));
 
-              // Rafraîchir la page si on est sur le lead
-              this.refreshLeadPage(leadId);
+              if (call && call.duration && call.duration > 0) {
+                console.log(`Call ${callId} is completed (${call.duration}s), updating...`);
+
+                // Mettre à jour l'activité
+                await this.updateCallWithDetails(leadId, callId, call);
+
+                // Rafraîchir la page
+                this.refreshLeadPage(leadId);
+              }
             }
           }
         }
