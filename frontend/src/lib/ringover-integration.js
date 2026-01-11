@@ -10,6 +10,9 @@ class RingoverIntegration {
     this.currentCallId = null;
     this.callStartTime = null;
     this.initialized = false;
+    this.pollingInterval = null;
+    this.lastSyncTime = null;
+    this.pendingCallIds = new Set(); // Appels en attente de mise à jour
   }
 
   // Initialiser le SDK RingOver
@@ -32,8 +35,11 @@ class RingoverIntegration {
       // Écouter les événements d'appel
       this.setupEventListeners();
 
+      // Démarrer le polling automatique
+      this.startPolling();
+
       this.initialized = true;
-      console.log('RingOver SDK initialized');
+      console.log('RingOver SDK initialized with polling');
     } catch (error) {
       console.error('Failed to initialize RingOver SDK:', error);
     }
@@ -68,6 +74,9 @@ class RingoverIntegration {
 
     this.currentCallId = call_id;
     this.callStartTime = Date.now();
+
+    // Ajouter à la liste des appels en attente
+    this.pendingCallIds.add(String(call_id));
 
     // Pour les appels sortants, chercher le lead correspondant
     if (direction === 'out') {
@@ -313,8 +322,183 @@ class RingoverIntegration {
     }
   }
 
+  // Démarrer le polling automatique
+  startPolling() {
+    // Synchroniser toutes les 15 secondes
+    this.pollingInterval = setInterval(() => {
+      this.syncPendingCalls();
+    }, 15000);
+
+    console.log('Call polling started (every 15s)');
+  }
+
+  // Arrêter le polling
+  stopPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+      console.log('Call polling stopped');
+    }
+  }
+
+  // Synchroniser les appels en attente
+  async syncPendingCalls() {
+    if (this.pendingCallIds.size === 0) {
+      return;
+    }
+
+    try {
+      console.log('Syncing pending calls:', Array.from(this.pendingCallIds));
+
+      // Récupérer l'historique des appels RingOver
+      const result = await this.api.getRingoverCalls();
+      const calls = result.calls || [];
+
+      // Pour chaque appel en attente, vérifier s'il est terminé
+      for (const pendingCallId of this.pendingCallIds) {
+        const call = calls.find(c => String(c.call_id) === pendingCallId);
+
+        if (call) {
+          // Vérifier si l'appel est terminé (a une durée)
+          if (call.duration && call.duration > 0) {
+            console.log(`Call ${pendingCallId} is completed, updating...`);
+
+            // Trouver le lead associé
+            const leadId = await this.findLeadIdByCallId(pendingCallId);
+
+            if (leadId) {
+              // Mettre à jour l'activité avec les détails finaux
+              await this.updateCallWithDetails(leadId, pendingCallId, call);
+
+              // Retirer de la liste des appels en attente
+              this.pendingCallIds.delete(pendingCallId);
+
+              // Rafraîchir la page si on est sur le lead
+              this.refreshLeadPage(leadId);
+            }
+          }
+        }
+      }
+
+      this.lastSyncTime = Date.now();
+
+    } catch (error) {
+      console.error('Failed to sync pending calls:', error);
+    }
+  }
+
+  // Trouver le lead_id à partir du call_id
+  async findLeadIdByCallId(callId) {
+    try {
+      // Si on est sur la page d'un lead, retourner son ID
+      if (window.location.pathname.includes('lead.html')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const leadId = urlParams.get('id');
+
+        if (leadId) {
+          // Vérifier que ce lead a bien une activité avec ce call_id
+          const activities = await this.api.getLeadActivities(leadId);
+          const hasCall = activities.some(act => {
+            if (act.call_id) {
+              return String(act.call_id) === String(callId);
+            }
+            if (act.metadata) {
+              try {
+                const metadata = JSON.parse(act.metadata);
+                return String(metadata.call_id) === String(callId);
+              } catch (e) {
+                return false;
+              }
+            }
+            return false;
+          });
+
+          if (hasCall) {
+            return leadId;
+          }
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Failed to find lead by call_id:', error);
+      return null;
+    }
+  }
+
+  // Mettre à jour un appel avec les détails complets
+  async updateCallWithDetails(leadId, callId, callData) {
+    try {
+      // Récupérer les activités du lead
+      const activities = await this.api.getLeadActivities(leadId);
+
+      // Trouver l'activité correspondant au call_id
+      const callActivity = activities.find(act => {
+        if (act.call_id && String(act.call_id) === String(callId)) {
+          return true;
+        }
+        if (act.metadata) {
+          try {
+            const metadata = JSON.parse(act.metadata);
+            return String(metadata.call_id) === String(callId);
+          } catch (e) {
+            return false;
+          }
+        }
+        return false;
+      });
+
+      if (callActivity) {
+        const duration = callData.duration || 0;
+        const minutes = Math.floor(duration / 60);
+        const seconds = duration % 60;
+
+        const updates = {
+          call_duration: duration,
+          call_status: 'ended',
+          description: `Appel terminé - Durée: ${minutes}m ${seconds}s`
+        };
+
+        // Ajouter l'URL d'enregistrement si disponible
+        if (callData.record) {
+          updates.recording_url = callData.record;
+          updates.description += ' - Enregistrement disponible';
+        }
+
+        await this.api.updateActivity(leadId, callActivity.id, updates);
+
+        console.log(`Call ${callId} updated with details:`, updates);
+
+        // Notification
+        if (callData.record) {
+          this.showNotification('🎙️ Appel terminé avec enregistrement', `Durée: ${minutes}m ${seconds}s`);
+        } else {
+          this.showNotification('📞 Appel terminé', `Durée: ${minutes}m ${seconds}s`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update call with details:', error);
+    }
+  }
+
+  // Rafraîchir la page lead si on est dessus
+  refreshLeadPage(leadId) {
+    if (window.location.pathname.includes('lead.html')) {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('id') === String(leadId)) {
+        setTimeout(() => {
+          if (typeof loadLead === 'function') {
+            loadLead();
+          }
+        }, 1000);
+      }
+    }
+  }
+
   // Détruire le SDK
   destroy() {
+    this.stopPolling();
+
     if (this.sdk) {
       // Le SDK RingOver n'a pas de méthode destroy explicite dans la doc
       this.sdk = null;
