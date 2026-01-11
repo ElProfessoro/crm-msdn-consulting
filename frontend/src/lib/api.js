@@ -228,6 +228,13 @@ class APIClient {
     const params = new URLSearchParams(filters);
     return this.request(`/ringover/calls?${params}`);
   }
+
+  async updateActivity(leadId, activityId, updates) {
+    return this.request(`/leads/${leadId}/activities/${activityId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
 }
 
 // Instance singleton

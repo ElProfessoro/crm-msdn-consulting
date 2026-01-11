@@ -533,4 +533,78 @@ leads.post('/:id/quick-actions', async (c) => {
   }
 });
 
+// PATCH /leads/:leadId/activities/:activityId - Mettre à jour une activité
+leads.patch('/:leadId/activities/:activityId', async (c) => {
+  try {
+    const user = getCurrentUser(c);
+    const leadId = c.req.param('leadId');
+    const activityId = c.req.param('activityId');
+    const updates = await c.req.json();
+
+    // Vérifier que l'activité existe et appartient au lead
+    const activity = await c.env.DB.prepare(`
+      SELECT a.* FROM activities a
+      JOIN leads l ON a.lead_id = l.id
+      WHERE a.id = ? AND a.lead_id = ?
+    `).bind(activityId, leadId).first();
+
+    if (!activity) {
+      return c.json({ error: 'Activité non trouvée' }, 404);
+    }
+
+    // Construire la requête de mise à jour
+    const updateFields: string[] = [];
+    const updateValues: any[] = [];
+
+    if (updates.description !== undefined) {
+      updateFields.push('description = ?');
+      updateValues.push(updates.description);
+    }
+
+    if (updates.call_duration !== undefined) {
+      updateFields.push('call_duration = ?');
+      updateValues.push(updates.call_duration);
+    }
+
+    if (updates.call_status !== undefined) {
+      updateFields.push('call_status = ?');
+      updateValues.push(updates.call_status);
+    }
+
+    if (updates.recording_url !== undefined) {
+      updateFields.push('recording_url = ?');
+      updateValues.push(updates.recording_url);
+    }
+
+    if (updates.metadata !== undefined) {
+      updateFields.push('metadata = ?');
+      updateValues.push(typeof updates.metadata === 'string' ? updates.metadata : JSON.stringify(updates.metadata));
+    }
+
+    if (updateFields.length === 0) {
+      return c.json({ error: 'Aucune mise à jour fournie' }, 400);
+    }
+
+    // Ajouter l'ID de l'activité à la fin pour le WHERE
+    updateValues.push(activityId);
+
+    await c.env.DB.prepare(`
+      UPDATE activities
+      SET ${updateFields.join(', ')}
+      WHERE id = ?
+    `).bind(...updateValues).run();
+
+    // Récupérer l'activité mise à jour
+    const updatedActivity = await c.env.DB.prepare(
+      'SELECT * FROM activities WHERE id = ?'
+    ).bind(activityId).first();
+
+    return c.json({ activity: updatedActivity });
+
+  } catch (error) {
+    console.error('Update activity error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
 export default leads;
