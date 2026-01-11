@@ -352,7 +352,7 @@ leads.post('/:id/activities', async (c) => {
     const { activity_type, title, description, metadata } = await c.req.json();
 
     // Vérifier accès au lead
-    let checkQuery = 'SELECT id FROM leads WHERE id = ?';
+    let checkQuery = 'SELECT id, status FROM leads WHERE id = ?';
     const checkParams: any[] = [leadId];
 
     if (user.role !== 'admin') {
@@ -362,10 +362,17 @@ leads.post('/:id/activities', async (c) => {
 
     const lead = await c.env.DB.prepare(checkQuery)
       .bind(...checkParams)
-      .first();
+      .first<{ id: number; status: string }>();
 
     if (!lead) {
       return c.json({ error: 'Lead non trouvé' }, 404);
+    }
+
+    // Vérifier que le lead n'est pas RGPD
+    if (lead.status === 'ne_plus_contacter') {
+      return c.json({
+        error: 'Impossible d\'ajouter une activité : ce lead ne souhaite plus être contacté (RGPD)'
+      }, 403);
     }
 
     // Créer l'activité
@@ -390,6 +397,138 @@ leads.post('/:id/activities', async (c) => {
     return c.json({ activity: result }, 201);
   } catch (error) {
     console.error('Create activity error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+// POST /leads/:id/quick-actions - Actions rapides
+leads.post('/:id/quick-actions', async (c) => {
+  try {
+    const user = getCurrentUser(c);
+    const leadId = c.req.param('id');
+    const { action_type, callback_datetime, note } = await c.req.json();
+
+    // Vérifier accès au lead
+    let checkQuery = 'SELECT * FROM leads WHERE id = ?';
+    const checkParams: any[] = [leadId];
+
+    if (user.role !== 'admin') {
+      checkQuery += ' AND user_id = ?';
+      checkParams.push(user.userId);
+    }
+
+    const lead = await c.env.DB.prepare(checkQuery)
+      .bind(...checkParams)
+      .first<Lead>();
+
+    if (!lead) {
+      return c.json({ error: 'Lead non trouvé' }, 404);
+    }
+
+    // Bloquer actions sauf do_not_contact si lead RGPD
+    if (lead.status === 'ne_plus_contacter' && action_type !== 'do_not_contact') {
+      return c.json({ error: 'Ce lead ne souhaite plus être contacté (RGPD)' }, 403);
+    }
+
+    let activity: any;
+    let task: any = null;
+
+    // Helper pour obtenir le titre de l'action
+    const getTitleForAction = (actionType: string): string => {
+      const titles: { [key: string]: string } = {
+        'call_made': 'Appel effectué',
+        'message_left': 'Message laissé',
+        'no_answer': 'Pas de réponse',
+      };
+      return titles[actionType] || 'Action effectuée';
+    };
+
+    switch (action_type) {
+      case 'call_made':
+      case 'message_left':
+      case 'no_answer':
+        // Simple activité
+        activity = await c.env.DB.prepare(
+          `INSERT INTO activities (user_id, lead_id, activity_type, title, description)
+           VALUES (?, ?, ?, ?, ?)
+           RETURNING *`
+        ).bind(
+          user.userId,
+          leadId,
+          action_type,
+          getTitleForAction(action_type),
+          note || null
+        ).first();
+        break;
+
+      case 'to_callback':
+        // Valider date future
+        if (!callback_datetime || new Date(callback_datetime) <= new Date()) {
+          return c.json({ error: 'Date de rappel invalide' }, 400);
+        }
+
+        // Créer la tâche
+        task = await c.env.DB.prepare(
+          `INSERT INTO tasks (title, description, status, priority, due_at, user_id, lead_id)
+           VALUES (?, ?, 'a_faire', 'haute', ?, ?, ?)
+           RETURNING *`
+        ).bind(
+          `Rappeler ${lead.full_name || lead.company || 'ce lead'}`,
+          note || 'Rappel programmé',
+          callback_datetime,
+          user.userId,
+          leadId
+        ).first();
+
+        // Créer l'activité avec référence à la tâche
+        activity = await c.env.DB.prepare(
+          `INSERT INTO activities (user_id, lead_id, task_id, activity_type, title, description, metadata)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           RETURNING *`
+        ).bind(
+          user.userId,
+          leadId,
+          task.id,
+          'to_callback',
+          'Rappel programmé',
+          note || null,
+          JSON.stringify({ callback_date: callback_datetime, task_id: task.id })
+        ).first();
+        break;
+
+      case 'do_not_contact':
+        // Créer l'activité
+        activity = await c.env.DB.prepare(
+          `INSERT INTO activities (user_id, lead_id, activity_type, title, description, metadata)
+           VALUES (?, ?, ?, ?, ?, ?)
+           RETURNING *`
+        ).bind(
+          user.userId,
+          leadId,
+          'do_not_contact',
+          'Ne plus contacter',
+          note || 'Lead marqué comme ne souhaitant plus être contacté (RGPD)',
+          JSON.stringify({ previous_status: lead.status })
+        ).first();
+
+        // Changer le statut du lead
+        await c.env.DB.prepare(
+          'UPDATE leads SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+        ).bind('ne_plus_contacter', leadId).run();
+        break;
+
+      default:
+        return c.json({ error: 'Type d\'action invalide' }, 400);
+    }
+
+    // Mettre à jour last_activity_at
+    await c.env.DB.prepare(
+      'UPDATE leads SET last_activity_at = CURRENT_TIMESTAMP WHERE id = ?'
+    ).bind(leadId).run();
+
+    return c.json({ success: true, activity, task }, 201);
+  } catch (error) {
+    console.error('Quick action error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
   }
 });

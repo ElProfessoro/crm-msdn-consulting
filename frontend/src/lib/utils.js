@@ -65,6 +65,7 @@ function getStatusBadgeClass(status) {
     'en_cours': 'badge-en-cours',
     'gagne': 'badge-gagne',
     'perdu': 'badge-perdu',
+    'ne_plus_contacter': 'badge-ne-plus-contacter',
   };
   return classes[status] || 'badge-nouveau';
 }
@@ -76,6 +77,7 @@ function getStatusLabel(status) {
     'en_cours': 'En cours',
     'gagne': 'Gagné',
     'perdu': 'Perdu',
+    'ne_plus_contacter': 'Ne plus contacter',
   };
   return labels[status] || status;
 }

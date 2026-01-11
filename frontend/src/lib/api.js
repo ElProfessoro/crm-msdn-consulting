@@ -115,6 +115,13 @@ class APIClient {
     });
   }
 
+  async quickAction(leadId, actionData) {
+    return this.request(`/leads/${leadId}/quick-actions`, {
+      method: 'POST',
+      body: JSON.stringify(actionData),
+    });
+  }
+
   // Tasks
   async getTasks(filters = {}) {
     const params = new URLSearchParams(filters);

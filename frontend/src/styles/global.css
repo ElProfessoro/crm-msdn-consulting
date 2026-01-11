@@ -339,6 +339,12 @@ a:hover {
   color: var(--status-perdu);
 }
 
+.badge-ne-plus-contacter {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
 /* Tables */
 .table-container {
   overflow-x: auto;

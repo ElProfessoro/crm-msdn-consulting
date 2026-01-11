@@ -28,7 +28,7 @@ export interface Lead {
   company: string | null;
   position: string | null;
   linkedin_url: string | null;
-  status: 'nouveau' | 'en_cours' | 'gagne' | 'perdu';
+  status: 'nouveau' | 'en_cours' | 'gagne' | 'perdu' | 'ne_plus_contacter';
   tags: string | null; // JSON string
   notes: string | null;
   source: string | null;

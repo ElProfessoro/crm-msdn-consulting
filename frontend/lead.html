@@ -234,6 +234,67 @@
     .breadcrumb a {
       color: var(--primary-blue);
     }
+
+    /* Actions rapides */
+    .quick-actions-section {
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-quick-action {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 8px;
+      background: var(--gray-50);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .btn-quick-action:hover {
+      background: var(--gray-100);
+      border-color: var(--primary-blue);
+      transform: translateY(-1px);
+    }
+
+    .btn-quick-action:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-quick-action-danger {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #dc2626;
+    }
+
+    .btn-quick-action-danger:hover {
+      background: #fee2e2;
+      border-color: #ef4444;
+    }
+
+    .quick-action-icon {
+      font-size: 20px;
+    }
+
+    .quick-action-label {
+      text-align: center;
+      line-height: 1.2;
+    }
   </style>
 </head>
 <body>
@@ -256,6 +317,32 @@
             <div class="profile-company" id="profileCompany">-</div>
             <div>
               <span class="badge" id="profileStatus">-</span>
+            </div>
+          </div>
+
+          <div class="quick-actions-section">
+            <div class="section-label">ACTIONS RAPIDES</div>
+            <div class="quick-actions-grid">
+              <button class="btn-quick-action" onclick="quickAction('call_made')" id="btnCallMade">
+                <span class="quick-action-icon">📞</span>
+                <span class="quick-action-label">Appel effectué</span>
+              </button>
+              <button class="btn-quick-action" onclick="quickAction('to_callback')" id="btnToCallback">
+                <span class="quick-action-icon">⏰</span>
+                <span class="quick-action-label">À rappeler</span>
+              </button>
+              <button class="btn-quick-action" onclick="quickAction('message_left')" id="btnMessageLeft">
+                <span class="quick-action-icon">💬</span>
+                <span class="quick-action-label">Message laissé</span>
+              </button>
+              <button class="btn-quick-action" onclick="quickAction('no_answer')" id="btnNoAnswer">
+                <span class="quick-action-icon">📵</span>
+                <span class="quick-action-label">Ne répond pas</span>
+              </button>
+              <button class="btn-quick-action btn-quick-action-danger" onclick="quickAction('do_not_contact')" id="btnDoNotContact">
+                <span class="quick-action-icon">🚫</span>
+                <span class="quick-action-label">Ne plus contacter</span>
+              </button>
             </div>
           </div>
 
@@ -293,6 +380,7 @@
               <option value="en_cours">🔄 En cours</option>
               <option value="gagne">🏆 Gagné</option>
               <option value="perdu">❌ Perdu</option>
+              <option value="ne_plus_contacter">🚫 Ne plus contacter</option>
             </select>
           </div>
 
@@ -407,6 +495,30 @@
         <div class="form-actions" style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
           <button type="button" class="btn btn-secondary" onclick="closeLeadTaskModal()">Annuler</button>
           <button type="submit" class="btn btn-primary">Créer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de rappel -->
+  <div class="modal" id="callbackModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: white; border-radius: 12px; padding: 32px; width: 90%; max-width: 450px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h3 style="font-size: 18px; font-weight: 600; margin: 0;">⏰ Planifier un rappel</h3>
+        <button onclick="closeCallbackModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--gray-400);">×</button>
+      </div>
+      <form id="callbackForm" onsubmit="submitCallback(event)">
+        <div class="form-group">
+          <label class="form-label">Date et heure du rappel *</label>
+          <input type="datetime-local" id="callbackDatetime" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Note (optionnel)</label>
+          <textarea id="callbackNote" class="form-textarea" rows="3" placeholder="Contexte du rappel..."></textarea>
+        </div>
+        <div class="form-actions" style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="closeCallbackModal()">Annuler</button>
+          <button type="submit" class="btn btn-primary">Créer le rappel</button>
         </div>
       </form>
     </div>
@@ -535,6 +647,47 @@
       document.getElementById('tagsContainer').innerHTML = tags.length > 0
         ? tags.map(tag => `<span class="tag">${tag}</span>`).join('')
         : '<span style="color: var(--gray-500); font-size: 13px;">Aucun tag</span>';
+
+      // Afficher bandeau RGPD si nécessaire
+      if (lead.status === 'ne_plus_contacter') {
+        // Supprimer bandeau existant s'il y en a un
+        const existingBanner = document.querySelector('.rgpd-warning-banner');
+        if (existingBanner) existingBanner.remove();
+
+        const warningBanner = document.createElement('div');
+        warningBanner.className = 'rgpd-warning-banner';
+        warningBanner.style.cssText = 'background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; margin: 16px 0; display: flex; align-items: center; gap: 8px;';
+        warningBanner.innerHTML = `
+          <span style="font-size: 20px;">🚫</span>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; color: #dc2626; font-size: 13px;">Ne plus contacter</div>
+            <div style="font-size: 12px; color: #991b1b;">Ce lead ne souhaite plus être contacté (RGPD)</div>
+          </div>
+        `;
+        document.querySelector('.profile-header').insertAdjacentElement('afterend', warningBanner);
+
+        // Désactiver boutons sauf do_not_contact
+        ['btnCallMade', 'btnToCallback', 'btnMessageLeft', 'btnNoAnswer'].forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn) btn.setAttribute('disabled', 'true');
+        });
+
+        // Masquer bouton nouvelle tâche
+        const addTaskBtn = document.querySelector('button[onclick="addTaskForLead()"]');
+        if (addTaskBtn) addTaskBtn.style.display = 'none';
+      } else {
+        // Réactiver les boutons si le statut change
+        const existingBanner = document.querySelector('.rgpd-warning-banner');
+        if (existingBanner) existingBanner.remove();
+
+        ['btnCallMade', 'btnToCallback', 'btnMessageLeft', 'btnNoAnswer'].forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn) btn.removeAttribute('disabled');
+        });
+
+        const addTaskBtn = document.querySelector('button[onclick="addTaskForLead()"]');
+        if (addTaskBtn) addTaskBtn.style.display = '';
+      }
     }
 
     function renderActivities(activities) {
@@ -556,7 +709,12 @@
         status_changed: { icon: '🔄', bg: '#dcfce7', color: '#22c55e' },
         lead_created: { icon: '✨', bg: '#fef3c7', color: '#d97706' },
         task_created: { icon: '✓', bg: '#dbeafe', color: '#2563eb' },
+        task_updated: { icon: '🔄', bg: '#dcfce7', color: '#22c55e' },
         lead_reassigned: { icon: '👥', bg: '#fef3c7', color: '#f59e0b' },
+        to_callback: { icon: '⏰', bg: '#fef3c7', color: '#f59e0b' },
+        message_left: { icon: '💬', bg: '#e0e7ff', color: '#6366f1' },
+        no_answer: { icon: '📵', bg: '#fee2e2', color: '#ef4444' },
+        do_not_contact: { icon: '🚫', bg: '#fef2f2', color: '#dc2626' },
       };
 
       timeline.innerHTML = activities.map(activity => {
@@ -785,6 +943,77 @@
         console.error('Error creating task:', error);
         utils.showError('Erreur lors de la création de la tâche');
       }
+    }
+
+    // Actions rapides
+    async function quickAction(actionType) {
+      if (actionType === 'to_callback') {
+        // Ouvrir modal pour date
+        document.getElementById('callbackModal').style.display = 'flex';
+        // Définir date min = maintenant
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('callbackDatetime').min = now.toISOString().slice(0, 16);
+        return;
+      }
+
+      if (actionType === 'do_not_contact') {
+        if (!confirm('⚠️ Êtes-vous sûr de vouloir marquer ce lead comme "Ne plus contacter" ?\n\nCette action bloquera toute future interaction (RGPD).')) {
+          return;
+        }
+      }
+
+      try {
+        await api.quickAction(leadId, { action_type: actionType });
+        utils.showSuccess(getActionConfirmationMessage(actionType));
+        loadLead(); // Recharger
+      } catch (error) {
+        console.error('Error with quick action:', error);
+        utils.showError(error.message || 'Erreur lors de l\'action');
+      }
+    }
+
+    async function submitCallback(event) {
+      event.preventDefault();
+
+      const callbackDatetime = document.getElementById('callbackDatetime').value;
+      const callbackNote = document.getElementById('callbackNote').value;
+
+      // Valider date future
+      if (new Date(callbackDatetime) <= new Date()) {
+        utils.showError('La date de rappel doit être dans le futur');
+        return;
+      }
+
+      try {
+        await api.quickAction(leadId, {
+          action_type: 'to_callback',
+          callback_datetime: callbackDatetime,
+          note: callbackNote || undefined
+        });
+
+        closeCallbackModal();
+        utils.showSuccess('Rappel programmé et tâche créée');
+        loadLead();
+      } catch (error) {
+        console.error('Error creating callback:', error);
+        utils.showError(error.message || 'Erreur lors de la création du rappel');
+      }
+    }
+
+    function closeCallbackModal() {
+      document.getElementById('callbackModal').style.display = 'none';
+      document.getElementById('callbackForm').reset();
+    }
+
+    function getActionConfirmationMessage(actionType) {
+      const messages = {
+        'call_made': 'Appel enregistré avec succès',
+        'message_left': 'Message enregistré avec succès',
+        'no_answer': 'Absence de réponse enregistrée',
+        'do_not_contact': 'Lead marqué comme "Ne plus contacter" (RGPD)'
+      };
+      return messages[actionType] || 'Action enregistrée';
     }
 
     async function toggleLeadTaskStatus(taskId, currentStatus) {

@@ -113,6 +113,19 @@ tasks.post('/', async (c) => {
       return c.json({ error: 'Le titre est requis' }, 400);
     }
 
+    // Si lead_id fourni, vérifier statut RGPD
+    if (lead_id) {
+      const lead = await c.env.DB.prepare(
+        'SELECT status FROM leads WHERE id = ?'
+      ).bind(lead_id).first<{ status: string }>();
+
+      if (lead?.status === 'ne_plus_contacter') {
+        return c.json({
+          error: 'Impossible de créer une tâche pour ce lead : il ne souhaite plus être contacté (RGPD)'
+        }, 403);
+      }
+    }
+
     const result = await c.env.DB.prepare(
       `INSERT INTO tasks (
         title, description, status, priority, due_at, user_id, lead_id
