@@ -6,6 +6,7 @@ export interface Env {
   DB: D1Database;
   R2_BUCKET: R2Bucket;
   JWT_SECRET: string;
+  RINGOVER_API_KEY: string;
 }
 
 export interface User {

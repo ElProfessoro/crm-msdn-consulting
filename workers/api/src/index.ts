@@ -15,6 +15,7 @@ import tasks from './routes/tasks';
 import dashboard from './routes/dashboard';
 import importRoutes from './routes/import';
 import users from './routes/users';
+import ringover from './routes/ringover';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -38,6 +39,7 @@ app.use('/tasks/*', requireAuth);
 app.use('/dashboard/*', requireAuth);
 app.use('/import/*', requireAuth);
 app.use('/users/*', requireAuth);
+app.use('/ringover/*', requireAuth);
 
 // Routes
 app.route('/auth', auth);
@@ -46,6 +48,7 @@ app.route('/tasks', tasks);
 app.route('/dashboard', dashboard);
 app.route('/import', importRoutes);
 app.route('/users', users);
+app.route('/ringover', ringover);
 
 // 404
 app.notFound((c) => {

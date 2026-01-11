@@ -772,11 +772,29 @@
       }
     }
 
-    function makeCall() {
-      if (currentLead?.phone) {
-        window.location.href = `tel:${currentLead.phone}`;
-      } else {
-        utils.showError('Aucun téléphone disponible');
+    async function makeCall() {
+      if (!currentLead?.phone) {
+        utils.showError('Aucun numéro de téléphone disponible pour ce lead');
+        return;
+      }
+
+      // Demander confirmation
+      if (!confirm(`Appeler ${currentLead.full_name || currentLead.company} au ${currentLead.phone} ?\n\nVotre téléphone va sonner, puis l'appel sera connecté.`)) {
+        return;
+      }
+
+      try {
+        // Initier l'appel via RingOver
+        const response = await api.initiateCall(currentLead.phone, leadId);
+
+        if (response.success) {
+          utils.showSuccess('Appel en cours d\'initiation... Votre téléphone va sonner.');
+          // Recharger pour afficher la nouvelle activité
+          setTimeout(() => loadLead(), 2000);
+        }
+      } catch (error) {
+        console.error('Error initiating call:', error);
+        utils.showError(error.message || 'Erreur lors de l\'initiation de l\'appel');
       }
     }
 

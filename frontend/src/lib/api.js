@@ -212,6 +212,22 @@ class APIClient {
   async getUsers() {
     return this.request('/users');
   }
+
+  // RingOver
+  async initiateCall(phoneNumber, leadId) {
+    return this.request('/ringover/call', {
+      method: 'POST',
+      body: JSON.stringify({
+        to_number: phoneNumber,
+        lead_id: leadId
+      }),
+    });
+  }
+
+  async getRingoverCalls(filters = {}) {
+    const params = new URLSearchParams(filters);
+    return this.request(`/ringover/calls?${params}`);
+  }
 }
 
 // Instance singleton
