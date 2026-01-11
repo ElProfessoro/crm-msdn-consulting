@@ -16,6 +16,7 @@ import dashboard from './routes/dashboard';
 import importRoutes from './routes/import';
 import users from './routes/users';
 import ringover from './routes/ringover';
+import webhooks from './routes/webhooks';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -49,6 +50,7 @@ app.route('/dashboard', dashboard);
 app.route('/import', importRoutes);
 app.route('/users', users);
 app.route('/ringover', ringover);
+app.route('/webhooks', webhooks);
 
 // 404
 app.notFound((c) => {

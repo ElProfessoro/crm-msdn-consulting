@@ -66,14 +66,22 @@ ringover.post('/call', async (c) => {
     // Si lead_id est fourni, créer une activité
     if (lead_id) {
       await c.env.DB.prepare(
-        `INSERT INTO activities (user_id, lead_id, activity_type, title, description, metadata)
-         VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO activities (
+          user_id, lead_id, activity_type, title, description,
+          call_id, channel_id, call_status, call_direction, to_number, metadata
+        )
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).bind(
         user.userId,
         lead_id,
         'call_made',
         'Appel initié via RingOver',
         `Appel vers ${to_number}`,
+        String(ringoverData.call_id || ''),
+        String(ringoverData.channel_id || ''),
+        'ringing',
+        'outbound',
+        formattedNumber,
         JSON.stringify({
           to_number: formattedNumber,
           ringover_response: ringoverData
