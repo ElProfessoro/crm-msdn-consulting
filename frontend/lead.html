@@ -1345,7 +1345,7 @@
     }
 
     // ── Déclenchement scan depuis le CRM ───────────────────────────
-    const LOCAL_SERVER = 'http://localhost:3001';
+    const LOCAL_SERVER = 'https://localhost:3001';
     let scanPollingInterval = null;
 
     async function triggerScan() {
@@ -1374,13 +1374,20 @@
         btn.innerHTML = '🔍 Lancer un scan';
         container.innerHTML = `
           <div style="padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
-            <div style="font-weight:600;color:#dc2626;margin-bottom:8px;">⚠ Serveur local non disponible</div>
-            <div style="font-size:13px;color:#7f1d1d;margin-bottom:10px;">
-              Le serveur de scan n'est pas démarré. Lancez-le dans votre terminal :
-            </div>
-            <code style="display:block;background:#fee2e2;padding:10px;border-radius:6px;font-size:12px;color:#991b1b;">
-              cd /chemin/vers/rgpd-scanner &amp;&amp; node bin/server.js
+            <div style="font-weight:600;color:#dc2626;margin-bottom:10px;">⚠ Serveur local non disponible</div>
+
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px;">1. Démarrez le serveur :</div>
+            <code style="display:block;background:#fee2e2;padding:8px 10px;border-radius:6px;font-size:12px;color:#991b1b;margin-bottom:12px;">
+              cd /chemin/vers/rgpd-scanner &amp;&amp; npm run server
             </code>
+
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px;">2. Acceptez le certificat (une seule fois) :</div>
+            <div style="font-size:13px;color:#7f1d1d;margin-bottom:6px;">
+              Ouvrez <a href="https://localhost:3001/health" target="_blank" style="color:#991b1b;font-weight:600;">https://localhost:3001/health</a>
+              dans Chrome, cliquez <em>"Paramètres avancés" → "Continuer vers localhost"</em>.
+            </div>
+
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px;margin-top:8px;">3. Relancez le scan.</div>
           </div>`;
         return;
       }
