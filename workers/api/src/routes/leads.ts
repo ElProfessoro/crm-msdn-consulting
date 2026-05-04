@@ -607,4 +607,41 @@ leads.patch('/:leadId/activities/:activityId', async (c) => {
   }
 });
 
+// GET /leads/:id/scanner-report
+// Retourne le dernier rapport scanner RGPD pour un lead (accès JWT standard)
+leads.get('/:id/scanner-report', async (c) => {
+  try {
+    const user = getCurrentUser(c);
+    const leadId = c.req.param('id');
+
+    // Vérifier l'accès au lead
+    let accessQuery = 'SELECT id FROM leads WHERE id = ?';
+    const accessParams: any[] = [leadId];
+    if (user.role !== 'admin') {
+      accessQuery += ' AND user_id = ?';
+      accessParams.push(user.userId);
+    }
+    const lead = await c.env.DB.prepare(accessQuery).bind(...accessParams).first();
+    if (!lead) return c.json({ error: 'Lead non trouvé' }, 404);
+
+    const report = await c.env.DB.prepare(`
+      SELECT * FROM scanner_reports WHERE lead_id = ? ORDER BY scanned_at DESC LIMIT 1
+    `).bind(leadId).first() as any;
+
+    if (!report) return c.json({ report: null });
+
+    return c.json({
+      report: {
+        ...report,
+        findings_json:   report.findings_json   ? JSON.parse(report.findings_json)   : [],
+        detected_saas:   report.detected_saas   ? JSON.parse(report.detected_saas)   : [],
+        missing_headers: report.missing_headers  ? JSON.parse(report.missing_headers)  : [],
+      }
+    });
+  } catch (error) {
+    console.error('Scanner report error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
 export default leads;

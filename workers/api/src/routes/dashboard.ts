@@ -37,7 +37,7 @@ dashboard.get('/stats', async (c) => {
     const tasksToday = await c.env.DB.prepare(
       `SELECT COUNT(*) as count FROM tasks
        WHERE date(created_at) = date('now')
-       ${userFilter.replace('user_id', 't.user_id')}`
+       ${userFilter}`
     ).bind(...userParam).first<{ count: number }>();
 
     // Taux de conversion ce mois

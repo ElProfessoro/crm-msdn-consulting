@@ -17,6 +17,7 @@ import importRoutes from './routes/import';
 import users from './routes/users';
 import ringover from './routes/ringover';
 import webhooks from './routes/webhooks';
+import scanner from './routes/scanner';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -51,6 +52,7 @@ app.route('/import', importRoutes);
 app.route('/users', users);
 app.route('/ringover', ringover);
 app.route('/webhooks', webhooks);
+app.route('/scanner', scanner); // Pas de requireAuth — auth par X-Scanner-Key
 
 // 404
 app.notFound((c) => {

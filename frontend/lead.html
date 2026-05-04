@@ -295,6 +295,46 @@
       text-align: center;
       line-height: 1.2;
     }
+
+    /* ── Pré-audit RGPD ── */
+    .scan-score-ring {
+      width: 80px; height: 80px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .scan-kpi-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 16px 0;
+    }
+    .scan-kpi {
+      background: var(--gray-50, #f9fafb); border: 1px solid var(--border-color);
+      border-radius: 8px; padding: 10px 14px;
+    }
+    .scan-kpi-label { font-size: 11px; color: var(--gray-500); text-transform: uppercase; letter-spacing: .04em; }
+    .scan-kpi-value { font-size: 20px; font-weight: 700; margin-top: 2px; }
+    .scan-findings-list { list-style: none; padding: 0; margin: 0; }
+    .scan-findings-list li { padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+    .scan-findings-list li:last-child { border-bottom: none; }
+    .scan-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 11px; font-weight: 600; color: #fff; margin-left: 6px;
+    }
+    .risk-faible   { background: #16a34a; }
+    .risk-moyen    { background: #ca8a04; }
+    .risk-eleve    { background: #ea580c; }
+    .risk-critique { background: #dc2626; }
+    .scan-section-title {
+      font-size: 12px; font-weight: 600; color: var(--gray-500);
+      text-transform: uppercase; letter-spacing: .05em;
+      margin: 16px 0 8px;
+    }
+    .scan-tag {
+      display: inline-block; background: #eff6ff; color: #1d4ed8;
+      border: 1px solid #bfdbfe; border-radius: 4px;
+      font-size: 11px; padding: 2px 7px; margin: 2px;
+    }
+    .scan-check { color: #16a34a; font-weight: 700; }
+    .scan-cross  { color: #dc2626; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -347,10 +387,10 @@
           </div>
 
           <div class="profile-actions">
-            <button class="btn btn-primary" onclick="sendEmail()">
+            <button class="btn btn-primary" onclick="sendEmail()" disabled style="opacity: 0.5; cursor: not-allowed;">
               📧 Envoyer un e-mail
             </button>
-            <button class="btn btn-secondary" onclick="makeCall()">
+            <button class="btn btn-secondary" onclick="makeCall()" disabled style="opacity: 0.5; cursor: not-allowed;">
               📞 Appeler
             </button>
           </div>
@@ -409,6 +449,7 @@
               <div class="tab active" data-tab="historique">Historique</div>
               <div class="tab" data-tab="notes">Notes</div>
               <div class="tab" data-tab="taches">Tâches</div>
+              <div class="tab" data-tab="preaudit" onclick="loadScannerReport()">🔍 Pré-audit RGPD</div>
             </div>
 
             <div class="tab-content active" id="historique">
@@ -448,6 +489,15 @@
               <div id="leadTasks">
                 <div style="text-align: center; padding: 24px; color: var(--gray-500);">
                   Chargement...
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Onglet Pré-audit RGPD ───────────────────────────── -->
+            <div class="tab-content" id="preaudit">
+              <div id="scannerReportContainer">
+                <div style="text-align:center;padding:32px;color:var(--gray-500);">
+                  Cliquez sur l'onglet pour charger le dernier scan RGPD...
                 </div>
               </div>
             </div>
@@ -1101,6 +1151,157 @@
         }
       };
     });
+
+    // ── Pré-audit RGPD ─────────────────────────────────────────────
+    let scanReportLoaded = false;
+
+    async function loadScannerReport() {
+      if (scanReportLoaded) return;
+      scanReportLoaded = true;
+
+      const container = document.getElementById('scannerReportContainer');
+      container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray-500);">Chargement du rapport scanner...</div>';
+
+      try {
+        // Endpoint protégé par JWT — accessible via les routes leads standards
+        const data = await api.request(`/leads/${leadId}/scanner-report`);
+        const report = data?.report;
+
+        if (!report) {
+          container.innerHTML = renderNoScan();
+          return;
+        }
+
+        container.innerHTML = renderScanReport(report);
+      } catch (err) {
+        container.innerHTML = `<div style="padding:16px;color:#dc2626;">Erreur : ${err.message}</div>`;
+      }
+    }
+
+    function renderNoScan() {
+      const websiteUrl = currentLead?.website_url || '';
+      const domain = websiteUrl ? new URL(websiteUrl.startsWith('http') ? websiteUrl : 'https://' + websiteUrl).hostname : '';
+      return `
+        <div style="text-align:center;padding:32px 16px;">
+          <div style="font-size:40px;margin-bottom:12px;">🔍</div>
+          <div style="font-weight:600;font-size:15px;margin-bottom:8px;">Aucun scan disponible</div>
+          <div style="color:var(--gray-500);font-size:13px;margin-bottom:20px;">
+            Aucun pré-audit RGPD n'a encore été réalisé pour ce lead.
+          </div>
+          ${domain ? `
+          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 16px;font-size:13px;text-align:left;max-width:360px;margin:0 auto;">
+            <div style="font-weight:600;margin-bottom:6px;">💻 Lancer le scan depuis le terminal :</div>
+            <code style="font-size:12px;color:#0369a1;display:block;background:#e0f2fe;padding:8px;border-radius:4px;">
+              node bin/scan.js https://${domain} --company "${currentLead?.company || ''}"
+            </code>
+          </div>` : `
+          <div style="color:var(--gray-500);font-size:13px;">
+            Ajoutez le site web du lead pour pouvoir lancer un scan.
+          </div>`}
+        </div>`;
+    }
+
+    function renderScanReport(r) {
+      const riskColors = { faible:'#16a34a', moyen:'#ca8a04', eleve:'#ea580c', critique:'#dc2626' };
+      const riskLabels = { faible:'Faible', moyen:'Moyen', eleve:'Élevé', critique:'Critique' };
+      const score = r.score ?? 0;
+      const risk  = r.risk_level ?? 'critique';
+      const color = riskColors[risk] || '#6b7280';
+      const date  = new Date(r.scanned_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+
+      const saas   = Array.isArray(r.detected_saas)   ? r.detected_saas   : [];
+      const hdrs   = Array.isArray(r.missing_headers)  ? r.missing_headers  : [];
+      const findings = Array.isArray(r.findings_json)  ? r.findings_json    : [];
+
+      // Grouper les findings par catégorie pour l'affichage
+      const catLabels = {
+        cookies:'Cookies', consent_banner:'Bannière consentement',
+        trackers:'Traceurs', privacy_policy:'Politique de confidentialité',
+        saas_stack:'Sous-traitants SaaS', headers:'En-têtes HTTP'
+      };
+      const grouped = {};
+      for (const f of findings) {
+        if (!grouped[f.category]) grouped[f.category] = [];
+        grouped[f.category].push(f);
+      }
+
+      return `
+        <!-- En-tête score -->
+        <div style="display:flex;align-items:center;gap:16px;padding:16px 0 8px;">
+          <div class="scan-score-ring" style="background:${color};">${score}</div>
+          <div>
+            <div style="font-size:17px;font-weight:700;">Score RGPD : ${score}/100
+              <span class="scan-badge risk-${risk}">${riskLabels[risk]}</span>
+            </div>
+            <div style="color:var(--gray-500);font-size:13px;margin-top:2px;">
+              Scan du ${date} · <a href="${r.url}" target="_blank" style="color:inherit;">${r.domain}</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI grid -->
+        <div class="scan-kpi-grid">
+          <div class="scan-kpi">
+            <div class="scan-kpi-label">Politique de conf.</div>
+            <div class="scan-kpi-value ${r.has_privacy_policy ? 'scan-check' : 'scan-cross'}">
+              ${r.has_privacy_policy ? '✓ Présente' : '✗ Absente'}
+            </div>
+          </div>
+          <div class="scan-kpi">
+            <div class="scan-kpi-label">Bannière consentement</div>
+            <div class="scan-kpi-value ${r.has_consent_banner ? 'scan-check' : 'scan-cross'}">
+              ${r.has_consent_banner ? '✓ Présente' : '✗ Absente'}
+            </div>
+          </div>
+          <div class="scan-kpi">
+            <div class="scan-kpi-label">Cookies détectés</div>
+            <div class="scan-kpi-value" style="color:#0f172a;">${r.cookies_count ?? 0}</div>
+          </div>
+          <div class="scan-kpi">
+            <div class="scan-kpi-label">Traceurs tiers</div>
+            <div class="scan-kpi-value" style="color:${r.trackers_count > 0 ? '#ea580c' : '#16a34a'};">
+              ${r.trackers_count ?? 0}
+            </div>
+          </div>
+        </div>
+
+        <!-- SaaS détectés -->
+        ${saas.length > 0 ? `
+        <div class="scan-section-title">Sous-traitants SaaS détectés</div>
+        <div>${saas.map(s => `<span class="scan-tag">🔧 ${s.name ?? s}</span>`).join('')}</div>
+        ` : ''}
+
+        <!-- Headers manquants -->
+        ${hdrs.length > 0 ? `
+        <div class="scan-section-title">En-têtes de sécurité manquants</div>
+        <ul class="scan-findings-list">
+          ${hdrs.map(h => `<li><span class="scan-cross">✗</span> ${h}</li>`).join('')}
+        </ul>
+        ` : `<div class="scan-section-title" style="color:#16a34a;">✓ En-têtes HTTP : tous présents</div>`}
+
+        <!-- Findings complets -->
+        ${Object.entries(grouped).length > 0 ? `
+        <div class="scan-section-title">Non-conformités détectées (${r.findings_count})</div>
+        <ul class="scan-findings-list">
+          ${Object.entries(grouped).map(([cat, fs]) =>
+            fs.map(f => `<li>
+              <span style="font-size:11px;background:#fee2e2;color:#991b1b;border-radius:3px;padding:1px 5px;margin-right:6px;">
+                ${catLabels[cat] || cat}
+              </span>
+              ${f.label}${f.detail ? ` <span style="color:var(--gray-500);">— ${f.detail}</span>` : ''}
+            </li>`).join('')
+          ).join('')}
+        </ul>
+        ` : '<div style="color:#16a34a;font-size:13px;padding:8px 0;">✓ Aucune non-conformité majeure détectée</div>'}
+
+        <!-- Commande pour re-scanner -->
+        <div style="margin-top:20px;background:#f8fafc;border:1px solid var(--border-color);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--gray-500);">
+          🔄 Pour mettre à jour ce scan :
+          <code style="display:block;margin-top:4px;background:#e2e8f0;padding:6px 10px;border-radius:4px;color:#0f172a;">
+            node bin/scan.js ${r.url} --company "${currentLead?.company || ''}"
+          </code>
+        </div>`;
+    }
 
     loadLead();
   </script>

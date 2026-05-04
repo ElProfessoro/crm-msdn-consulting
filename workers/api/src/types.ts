@@ -7,6 +7,7 @@ export interface Env {
   R2_BUCKET: R2Bucket;
   JWT_SECRET: string;
   RINGOVER_API_KEY: string;
+  SCANNER_API_KEY: string;
 }
 
 export interface User {
@@ -78,4 +79,27 @@ export interface DashboardStats {
   leads_lost_month: number;
   tasks_today: number;
   conversion_rate: number;
+}
+
+export interface ScannerReport {
+  id: number;
+  lead_id: number | null;
+  domain: string;
+  url: string;
+  company_name: string | null;
+  scanned_at: string;
+  duration_ms: number | null;
+  status: 'completed' | 'failed' | 'partial';
+  score: number | null;
+  risk_level: 'faible' | 'moyen' | 'eleve' | 'critique' | null;
+  findings_count: number;
+  has_privacy_policy: number; // 0/1
+  has_consent_banner: number; // 0/1
+  cookies_count: number;
+  trackers_count: number;
+  missing_headers_count: number;
+  findings_json: any[] | null;
+  detected_saas: any[] | null;
+  missing_headers: string[] | null;
+  created_at: string;
 }
