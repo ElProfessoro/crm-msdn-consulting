@@ -336,6 +336,61 @@
     .scan-check { color: #16a34a; font-weight: 700; }
     .scan-cross  { color: #dc2626; font-weight: 700; }
 
+    /* ── Brief commercial ── */
+    .brief-card {
+      border-radius: 10px; padding: 16px 18px; margin-bottom: 16px;
+    }
+    .brief-card.risk-critique { background: #fff1f2; border: 1.5px solid #fecdd3; }
+    .brief-card.risk-eleve    { background: #fff7ed; border: 1.5px solid #fed7aa; }
+    .brief-card.risk-moyen    { background: #fefce8; border: 1.5px solid #fef08a; }
+    .brief-card.risk-faible   { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+
+    .brief-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+    }
+    .brief-title {
+      font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .05em;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .brief-summary {
+      font-size: 13.5px; line-height: 1.6; color: #1e293b; margin-bottom: 14px;
+    }
+
+    .pitch-points { list-style: none; padding: 0; margin: 0 0 14px; }
+    .pitch-points li {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 13px; line-height: 1.55; padding: 6px 0;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+    }
+    .pitch-points li:last-child { border-bottom: none; }
+    .pitch-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+    .risk-box {
+      background: rgba(0,0,0,.04); border-radius: 8px;
+      padding: 10px 14px; font-size: 12.5px; line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    .risk-box strong { display: block; margin-bottom: 4px; font-size: 11px;
+      text-transform: uppercase; letter-spacing: .05em; opacity: .7; }
+
+    .copy-btn {
+      font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 5px;
+      border: 1px solid currentColor; background: transparent; cursor: pointer;
+      opacity: .7; transition: opacity .15s;
+    }
+    .copy-btn:hover { opacity: 1; }
+
+    .kpi-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0;
+    }
+    .kpi-cell {
+      text-align: center; padding: 10px 6px;
+      background: var(--gray-50); border: 1px solid var(--border-color); border-radius: 8px;
+    }
+    .kpi-cell .kv { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+    .kpi-cell .kl { font-size: 10px; color: var(--gray-500); text-transform: uppercase;
+      letter-spacing: .03em; line-height: 1.3; }
+
     /* ── Bouton Lancer un scan ── */
     .scan-trigger-bar {
       display: flex; align-items: center; justify-content: space-between;
@@ -1245,19 +1300,129 @@
         </div>`;
     }
 
+    // ── Génération du brief commercial ───────────────────────────────
+    function buildCommercialBrief(r) {
+      const domain    = r.domain || r.url;
+      const score     = r.score ?? 0;
+      const risk      = r.risk_level ?? 'critique';
+      const saas      = Array.isArray(r.detected_saas)  ? r.detected_saas  : [];
+      const hdrs      = Array.isArray(r.missing_headers) ? r.missing_headers : [];
+      const findings  = Array.isArray(r.findings_json)   ? r.findings_json   : [];
+      const trackers  = r.trackers_count ?? 0;
+      const cookies   = r.cookies_count  ?? 0;
+      const noConsent = !r.has_consent_banner;
+      const noPolicy  = !r.has_privacy_policy;
+
+      // Noms des traceurs détectés
+      const trackerNames = saas.filter(s => {
+        const n = (s.name ?? s ?? '').toLowerCase();
+        return n.includes('google') || n.includes('facebook') || n.includes('meta') ||
+               n.includes('analytics') || n.includes('pixel') || n.includes('hotjar') ||
+               n.includes('hubspot') || n.includes('linkedin') || n.includes('twitter') ||
+               n.includes('tiktok') || n.includes('matomo') || n.includes('segment');
+      }).map(s => s.name ?? s).slice(0, 3);
+
+      // ── Résumé en une phrase ──
+      const problems = [];
+      if (noConsent)  problems.push('aucune bannière de consentement');
+      if (noPolicy)   problems.push('politique de confidentialité absente');
+      if (trackers > 0 && noConsent) problems.push(`${trackers} traceur${trackers>1?'s':''} actif${trackers>1?'s':''} sans accord`);
+      if (hdrs.length >= 3) problems.push(`${hdrs.length} failles de sécurité HTTP`);
+
+      const riskEmoji = { faible:'🟢', moyen:'🟡', eleve:'🟠', critique:'🔴' }[risk] || '⚪';
+      const riskLabel = { faible:'Faible', moyen:'Moyen', eleve:'Élevé', critique:'Critique' }[risk] || risk;
+
+      let summary = `Le site <strong>${domain}</strong> obtient un score de conformité RGPD de <strong>${score}/100</strong> (risque ${riskLabel.toLowerCase()}).`;
+      if (problems.length > 0) {
+        summary += ` Les principaux manquements détectés : <strong>${problems.join(', ')}</strong>.`;
+      }
+      if (score <= 49) {
+        summary += ` Ce niveau d'exposition représente un risque réel de sanction CNIL.`;
+      }
+
+      // ── Points d'accroche pour le call ──
+      const points = [];
+
+      if (noConsent) {
+        const trackerStr = trackerNames.length > 0 ? ` (${trackerNames.join(', ')})` : '';
+        points.push({
+          icon: '🚨',
+          text: `<strong>Pas de bannière de consentement</strong> — le site dépose${trackers > 0 ? ` ${trackers} traceur${trackers>1?'s':''} tiers${trackerStr}` : ' des cookies'} sans recueillir l'accord des visiteurs. Obligation légale depuis 2018 (Art. 82 LIL + lignes directrices CNIL 2020).`
+        });
+      }
+
+      if (noPolicy) {
+        points.push({
+          icon: '📄',
+          text: `<strong>Politique de confidentialité absente</strong> — toute collecte de données (formulaire, commande, newsletter…) sans cette mention est illégale (Art. 13 et 14 RGPD).`
+        });
+      }
+
+      if (trackers > 0 && noConsent) {
+        const names = trackerNames.length > 0 ? trackerNames.join(' et ') : `${trackers} outil${trackers>1?'s':''} tiers`;
+        points.push({
+          icon: '📡',
+          text: `<strong>${names} actif${trackerNames.length>1?'s':''} sans consentement</strong> — ces outils transfèrent des données vers des serveurs hors UE, ce qui constitue un transfert illicite de données personnelles.`
+        });
+      }
+
+      if (hdrs.length > 0) {
+        points.push({
+          icon: '🔓',
+          text: `<strong>${hdrs.length} en-tête${hdrs.length>1?'s':''} de sécurité HTTP manquant${hdrs.length>1?'s':''}</strong> — le site est exposé à des risques d'injection de contenu et de vol de sessions (${hdrs.slice(0,2).join(', ')}${hdrs.length>2?' …':''}).`
+        });
+      }
+
+      if (cookies > 5 && !noConsent) {
+        points.push({
+          icon: '🍪',
+          text: `<strong>${cookies} cookies détectés</strong> — même avec une bannière, la gestion des cookies doit être auditée pour s'assurer de leur conformité (durée, finalité, opt-out effectif).`
+        });
+      }
+
+      if (saas.length > 0) {
+        const saasNames = saas.slice(0,4).map(s => s.name ?? s).join(', ');
+        points.push({
+          icon: '🔧',
+          text: `<strong>Sous-traitants SaaS identifiés : ${saasNames}${saas.length>4?' …':''}</strong> — chaque outil nécessite un DPA (accord de traitement) et doit figurer dans le registre des traitements.`
+        });
+      }
+
+      // ── Risques légaux ──
+      const legalRisks = [];
+      if (noConsent || noPolicy) {
+        legalRisks.push('Mise en demeure CNIL possible à tout moment, suite à une plainte d\'un visiteur ou un contrôle proactif');
+        legalRisks.push('Amende jusqu\'à <strong>20 M€ ou 4 % du CA annuel mondial</strong> (le plus élevé des deux)');
+        legalRisks.push('Pour une TPE/PME, les sanctions récentes se situent entre <strong>5 000 € et 150 000 €</strong>');
+      }
+      if (trackers > 0 && noConsent) {
+        legalRisks.push('Transfert illicite de données vers des pays tiers (États-Unis) — risque aggravé depuis l\'invalidation du Privacy Shield');
+      }
+
+      // ── Phrase d'accroche suggérée ──
+      let opener = '';
+      if (risk === 'critique' || risk === 'eleve') {
+        opener = `"Bonjour, j'ai analysé votre site ${domain} et j'ai identifié ${r.findings_count ?? problems.length} point${(r.findings_count??0)>1?'s':''} de non-conformité RGPD, dont ${noConsent ? 'une absence de bannière de consentement' : noPolicy ? 'une politique de confidentialité manquante' : 'des traceurs actifs sans accord'}. Est-ce que vous avez déjà eu l'occasion de faire un audit de votre conformité ?"`;
+      } else {
+        opener = `"Bonjour, j'ai fait une analyse rapide de votre site ${domain}. Votre conformité RGPD est globalement correcte (${score}/100), mais on a relevé quelques points à consolider, notamment ${problems[0] || 'sur la gestion des cookies'}. Êtes-vous accompagné sur ce sujet ?"`;
+      }
+
+      return { summary, points, legalRisks, opener, riskEmoji, riskLabel, risk };
+    }
+
     function renderScanReport(r) {
       const riskColors = { faible:'#16a34a', moyen:'#ca8a04', eleve:'#ea580c', critique:'#dc2626' };
-      const riskLabels = { faible:'Faible', moyen:'Moyen', eleve:'Élevé', critique:'Critique' };
       const score = r.score ?? 0;
       const risk  = r.risk_level ?? 'critique';
       const color = riskColors[risk] || '#6b7280';
       const date  = new Date(r.scanned_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
 
-      const saas   = Array.isArray(r.detected_saas)   ? r.detected_saas   : [];
-      const hdrs   = Array.isArray(r.missing_headers)  ? r.missing_headers  : [];
-      const findings = Array.isArray(r.findings_json)  ? r.findings_json    : [];
+      const saas     = Array.isArray(r.detected_saas)  ? r.detected_saas  : [];
+      const hdrs     = Array.isArray(r.missing_headers) ? r.missing_headers : [];
+      const findings = Array.isArray(r.findings_json)   ? r.findings_json   : [];
 
-      // Grouper les findings par catégorie pour l'affichage
+      const brief = buildCommercialBrief(r);
+
       const catLabels = {
         cookies:'Cookies', consent_banner:'Bannière consentement',
         trackers:'Traceurs', privacy_policy:'Politique de confidentialité',
@@ -1269,78 +1434,134 @@
         grouped[f.category].push(f);
       }
 
+      // Texte copiable pour le commercial
+      const copyText = [
+        `=== Pré-audit RGPD — ${r.domain} (${date}) ===`,
+        `Score : ${score}/100 — Risque : ${brief.riskLabel}`,
+        '',
+        'RÉSUMÉ :',
+        r.domain + (r.has_privacy_policy ? ' dispose d\'une politique de conf.' : ' n\'a pas de politique de conf.') +
+          (r.has_consent_banner ? ', bannière de consentement présente' : ', AUCUNE bannière de consentement') +
+          `, ${r.trackers_count ?? 0} traceur(s), ${r.cookies_count ?? 0} cookie(s).`,
+        '',
+        'POINTS D\'ACCROCHE :',
+        ...brief.points.map(p => '• ' + p.text.replace(/<[^>]+>/g, '')),
+        '',
+        'PHRASE D\'OUVERTURE SUGGÉRÉE :',
+        brief.opener.replace(/<[^>]+>/g, ''),
+      ].join('\n');
+
       return `
-        <!-- En-tête score -->
-        <div style="display:flex;align-items:center;gap:16px;padding:16px 0 8px;">
+        <!-- ── En-tête score ── -->
+        <div style="display:flex;align-items:center;gap:16px;padding:4px 0 16px;border-bottom:1px solid var(--border-color);margin-bottom:16px;">
           <div class="scan-score-ring" style="background:${color};">${score}</div>
-          <div>
-            <div style="font-size:17px;font-weight:700;">Score RGPD : ${score}/100
-              <span class="scan-badge risk-${risk}">${riskLabels[risk]}</span>
+          <div style="flex:1;">
+            <div style="font-size:17px;font-weight:700;">
+              Score RGPD : ${score}/100
+              <span class="scan-badge risk-${risk}">${brief.riskLabel}</span>
             </div>
-            <div style="color:var(--gray-500);font-size:13px;margin-top:2px;">
+            <div style="color:var(--gray-500);font-size:13px;margin-top:3px;">
               Scan du ${date} · <a href="${r.url}" target="_blank" style="color:inherit;">${r.domain}</a>
             </div>
           </div>
         </div>
 
-        <!-- KPI grid -->
-        <div class="scan-kpi-grid">
-          <div class="scan-kpi">
-            <div class="scan-kpi-label">Politique de conf.</div>
-            <div class="scan-kpi-value ${r.has_privacy_policy ? 'scan-check' : 'scan-cross'}">
-              ${r.has_privacy_policy ? '✓ Présente' : '✗ Absente'}
-            </div>
+        <!-- ── KPI bar ── -->
+        <div class="kpi-row">
+          <div class="kpi-cell">
+            <div class="kv ${r.has_privacy_policy ? 'scan-check' : 'scan-cross'}">${r.has_privacy_policy ? '✓' : '✗'}</div>
+            <div class="kl">Politique<br>de conf.</div>
           </div>
-          <div class="scan-kpi">
-            <div class="scan-kpi-label">Bannière consentement</div>
-            <div class="scan-kpi-value ${r.has_consent_banner ? 'scan-check' : 'scan-cross'}">
-              ${r.has_consent_banner ? '✓ Présente' : '✗ Absente'}
-            </div>
+          <div class="kpi-cell">
+            <div class="kv ${r.has_consent_banner ? 'scan-check' : 'scan-cross'}">${r.has_consent_banner ? '✓' : '✗'}</div>
+            <div class="kl">Bannière<br>consentement</div>
           </div>
-          <div class="scan-kpi">
-            <div class="scan-kpi-label">Cookies détectés</div>
-            <div class="scan-kpi-value" style="color:#0f172a;">${r.cookies_count ?? 0}</div>
+          <div class="kpi-cell">
+            <div class="kv" style="color:${(r.trackers_count??0)>0?'#ea580c':'#16a34a'}">${r.trackers_count ?? 0}</div>
+            <div class="kl">Traceurs<br>tiers</div>
           </div>
-          <div class="scan-kpi">
-            <div class="scan-kpi-label">Traceurs tiers</div>
-            <div class="scan-kpi-value" style="color:${r.trackers_count > 0 ? '#ea580c' : '#16a34a'};">
-              ${r.trackers_count ?? 0}
-            </div>
+          <div class="kpi-cell">
+            <div class="kv" style="color:#0f172a;">${r.cookies_count ?? 0}</div>
+            <div class="kl">Cookies<br>détectés</div>
           </div>
         </div>
 
-        <!-- SaaS détectés -->
+        <!-- ── Brief commercial ── -->
+        <div class="brief-card risk-${risk}">
+          <div class="brief-header">
+            <div class="brief-title" style="color:${color};">
+              ${brief.riskEmoji} Brief commercial
+            </div>
+            <button class="copy-btn" style="color:${color};"
+              onclick="navigator.clipboard.writeText(${JSON.stringify(copyText)}).then(()=>{this.textContent='✓ Copié !';setTimeout(()=>this.textContent='Copier',2000)})">
+              Copier
+            </button>
+          </div>
+
+          <!-- Résumé -->
+          <p class="brief-summary">${brief.summary}</p>
+
+          <!-- Points d'accroche -->
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:${color};opacity:.8;margin-bottom:8px;">
+            Arguments pour le call
+          </div>
+          <ul class="pitch-points">
+            ${brief.points.map(p => `
+              <li>
+                <span class="pitch-icon">${p.icon}</span>
+                <span>${p.text}</span>
+              </li>`).join('')}
+            ${brief.points.length === 0 ? `<li><span class="pitch-icon">✅</span><span>Conformité globalement satisfaisante — angle de vente sur la prévention et la mise en place d'un registre de traitements.</span></li>` : ''}
+          </ul>
+
+          <!-- Phrase d'ouverture -->
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:${color};opacity:.8;margin-bottom:8px;">
+            Phrase d'ouverture suggérée
+          </div>
+          <div class="risk-box" style="font-style:italic;font-size:13px;line-height:1.65;">
+            ${brief.opener}
+          </div>
+
+          <!-- Risques légaux -->
+          ${brief.legalRisks.length > 0 ? `
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:${color};opacity:.8;margin-bottom:6px;">
+            Exposition légale
+          </div>
+          <div class="risk-box">
+            ${brief.legalRisks.map(r => `<div style="padding:2px 0;">⚖️ ${r}</div>`).join('')}
+          </div>` : ''}
+        </div>
+
+        <!-- ── Sous-traitants SaaS ── -->
         ${saas.length > 0 ? `
-        <div class="scan-section-title">Sous-traitants SaaS détectés</div>
-        <div>${saas.map(s => `<span class="scan-tag">🔧 ${s.name ?? s}</span>`).join('')}</div>
+        <div class="scan-section-title">Sous-traitants SaaS identifiés</div>
+        <div style="margin-bottom:12px;">${saas.map(s => `<span class="scan-tag">🔧 ${s.name ?? s}</span>`).join('')}</div>
         ` : ''}
 
-        <!-- Headers manquants -->
+        <!-- ── En-têtes HTTP manquants ── -->
         ${hdrs.length > 0 ? `
-        <div class="scan-section-title">En-têtes de sécurité manquants</div>
-        <ul class="scan-findings-list">
-          ${hdrs.map(h => `<li><span class="scan-cross">✗</span> ${h}</li>`).join('')}
-        </ul>
-        ` : `<div class="scan-section-title" style="color:#16a34a;">✓ En-têtes HTTP : tous présents</div>`}
+        <div class="scan-section-title">En-têtes de sécurité manquants (${hdrs.length})</div>
+        <ul class="scan-findings-list" style="margin-bottom:12px;">
+          ${hdrs.map(h => `<li><span class="scan-cross">✗</span> <code style="font-size:12px;">${h}</code></li>`).join('')}
+        </ul>` : ''}
 
-        <!-- Findings complets -->
+        <!-- ── Non-conformités détaillées ── -->
         ${Object.entries(grouped).length > 0 ? `
-        <div class="scan-section-title">Non-conformités détectées (${r.findings_count})</div>
+        <div class="scan-section-title">Détail des non-conformités (${r.findings_count ?? findings.length})</div>
         <ul class="scan-findings-list">
           ${Object.entries(grouped).map(([cat, fs]) =>
             fs.map(f => `<li>
-              <span style="font-size:11px;background:#fee2e2;color:#991b1b;border-radius:3px;padding:1px 5px;margin-right:6px;">
+              <span style="font-size:10px;background:#fee2e2;color:#991b1b;border-radius:3px;padding:1px 5px;margin-right:6px;font-weight:600;">
                 ${catLabels[cat] || cat}
               </span>
-              ${f.label}${f.detail ? ` <span style="color:var(--gray-500);">— ${f.detail}</span>` : ''}
+              ${f.label}${f.detail ? ` <span style="color:var(--gray-500);font-size:12px;">— ${f.detail}</span>` : ''}
             </li>`).join('')
           ).join('')}
-        </ul>
-        ` : '<div style="color:#16a34a;font-size:13px;padding:8px 0;">✓ Aucune non-conformité majeure détectée</div>'}
+        </ul>` : '<div style="color:#16a34a;font-size:13px;padding:6px 0;">✓ Aucune non-conformité détectée</div>'}
 
-        <!-- Bouton re-scanner -->
-        <div style="margin-top:20px;background:#f8fafc;border:1px solid var(--border-color);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--gray-500);display:flex;align-items:center;justify-content:space-between;gap:12px;">
-          <span>🔄 Ce rapport date du ${date}. Cliquez sur <strong>🔍 Lancer un scan</strong> ci-dessus pour le mettre à jour.</span>
+        <!-- ── Footer ── -->
+        <div style="margin-top:16px;font-size:11px;color:var(--gray-400);text-align:right;">
+          Scan automatique du ${date} — données à titre indicatif, non opposables
         </div>`;
     }
 
