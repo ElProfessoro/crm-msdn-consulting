@@ -335,6 +335,35 @@
     }
     .scan-check { color: #16a34a; font-weight: 700; }
     .scan-cross  { color: #dc2626; font-weight: 700; }
+
+    /* ── Bouton Lancer un scan ── */
+    .scan-trigger-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 0 16px; border-bottom: 1px solid var(--border-color); margin-bottom: 16px;
+    }
+    .scan-trigger-bar h4 { margin: 0; font-size: 14px; font-weight: 600; color: var(--gray-700, #374151); }
+    .btn-scan {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
+      background: var(--primary-color, #4f46e5); color: #fff; border: none; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-scan:hover:not(:disabled) { opacity: 0.88; }
+    .btn-scan:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { display: inline-block; animation: spin 1.4s linear infinite; }
+
+    /* ── Barre de progression du scan ── */
+    .scan-progress-bar-track {
+      max-width: 320px; margin: 0 auto;
+      background: #e2e8f0; border-radius: 999px; height: 6px; overflow: hidden;
+    }
+    .scan-progress-bar-fill {
+      width: 0%; height: 100%;
+      background: var(--primary-color, #4f46e5);
+      border-radius: 999px; transition: width 0.6s ease;
+    }
   </style>
 </head>
 <body>
@@ -495,6 +524,12 @@
 
             <!-- ── Onglet Pré-audit RGPD ───────────────────────────── -->
             <div class="tab-content" id="preaudit">
+              <div class="scan-trigger-bar">
+                <h4>🔍 Pré-audit RGPD automatique</h4>
+                <button id="scanBtn" class="btn-scan" onclick="triggerScan()">
+                  🔍 Lancer un scan
+                </button>
+              </div>
               <div id="scannerReportContainer">
                 <div style="text-align:center;padding:32px;color:var(--gray-500);">
                   Cliquez sur l'onglet pour charger le dernier scan RGPD...
@@ -1169,10 +1204,16 @@
 
         if (!report) {
           container.innerHTML = renderNoScan();
+          // Activer le bouton scan s'il y a un site
+          const btn = document.getElementById('scanBtn');
+          if (btn && !currentLead?.website_url) btn.disabled = true;
           return;
         }
 
         container.innerHTML = renderScanReport(report);
+        // Mettre le bouton en mode "re-scanner"
+        const btn = document.getElementById('scanBtn');
+        if (btn) btn.innerHTML = '🔄 Re-scanner';
       } catch (err) {
         container.innerHTML = `<div style="padding:16px;color:#dc2626;">Erreur : ${err.message}</div>`;
       }
@@ -1180,7 +1221,7 @@
 
     function renderNoScan() {
       const websiteUrl = currentLead?.website_url || '';
-      const domain = websiteUrl ? new URL(websiteUrl.startsWith('http') ? websiteUrl : 'https://' + websiteUrl).hostname : '';
+      const hasUrl = !!websiteUrl;
       return `
         <div style="text-align:center;padding:32px 16px;">
           <div style="font-size:40px;margin-bottom:12px;">🔍</div>
@@ -1188,16 +1229,19 @@
           <div style="color:var(--gray-500);font-size:13px;margin-bottom:20px;">
             Aucun pré-audit RGPD n'a encore été réalisé pour ce lead.
           </div>
-          ${domain ? `
-          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 16px;font-size:13px;text-align:left;max-width:360px;margin:0 auto;">
-            <div style="font-weight:600;margin-bottom:6px;">💻 Lancer le scan depuis le terminal :</div>
-            <code style="font-size:12px;color:#0369a1;display:block;background:#e0f2fe;padding:8px;border-radius:4px;">
-              node bin/scan.js https://${domain} --company "${currentLead?.company || ''}"
-            </code>
-          </div>` : `
-          <div style="color:var(--gray-500);font-size:13px;">
-            Ajoutez le site web du lead pour pouvoir lancer un scan.
-          </div>`}
+          ${hasUrl
+            ? `<div style="font-size:13px;color:var(--gray-500);">
+                Cliquez sur <strong>🔍 Lancer un scan</strong> ci-dessus pour démarrer l'analyse automatique du site
+                <strong>${websiteUrl}</strong>.
+               </div>
+               <div style="margin-top:12px;font-size:12px;color:var(--gray-400);">
+                 ⚠ Le serveur local de scan doit être démarré sur votre machine :<br>
+                 <code style="background:#f1f5f9;padding:3px 6px;border-radius:4px;">node bin/server.js</code>
+               </div>`
+            : `<div style="color:var(--gray-500);font-size:13px;">
+                Ajoutez le <strong>site web</strong> du lead dans sa fiche pour pouvoir lancer un scan.
+               </div>`
+          }
         </div>`;
     }
 
@@ -1294,13 +1338,163 @@
         </ul>
         ` : '<div style="color:#16a34a;font-size:13px;padding:8px 0;">✓ Aucune non-conformité majeure détectée</div>'}
 
-        <!-- Commande pour re-scanner -->
-        <div style="margin-top:20px;background:#f8fafc;border:1px solid var(--border-color);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--gray-500);">
-          🔄 Pour mettre à jour ce scan :
-          <code style="display:block;margin-top:4px;background:#e2e8f0;padding:6px 10px;border-radius:4px;color:#0f172a;">
-            node bin/scan.js ${r.url} --company "${currentLead?.company || ''}"
-          </code>
+        <!-- Bouton re-scanner -->
+        <div style="margin-top:20px;background:#f8fafc;border:1px solid var(--border-color);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--gray-500);display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <span>🔄 Ce rapport date du ${date}. Cliquez sur <strong>🔍 Lancer un scan</strong> ci-dessus pour le mettre à jour.</span>
         </div>`;
+    }
+
+    // ── Déclenchement scan depuis le CRM ───────────────────────────
+    const LOCAL_SERVER = 'http://localhost:3001';
+    let scanPollingInterval = null;
+
+    async function triggerScan() {
+      const websiteUrl = currentLead?.website_url;
+      const btn = document.getElementById('scanBtn');
+      const container = document.getElementById('scannerReportContainer');
+
+      if (!websiteUrl) {
+        container.innerHTML = `
+          <div style="padding:16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:13px;">
+            <strong style="color:#c2410c;">⚠ Site web manquant</strong><br>
+            Ajoutez l'URL du site dans la fiche lead pour pouvoir lancer un scan.
+          </div>`;
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Vérification...';
+
+      // 1. Vérifier que le serveur local est disponible
+      try {
+        const hRes = await fetch(`${LOCAL_SERVER}/health`, { signal: AbortSignal.timeout(3000) });
+        if (!hRes.ok) throw new Error('not ready');
+      } catch {
+        btn.disabled = false;
+        btn.innerHTML = '🔍 Lancer un scan';
+        container.innerHTML = `
+          <div style="padding:20px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
+            <div style="font-weight:600;color:#dc2626;margin-bottom:8px;">⚠ Serveur local non disponible</div>
+            <div style="font-size:13px;color:#7f1d1d;margin-bottom:10px;">
+              Le serveur de scan n'est pas démarré. Lancez-le dans votre terminal :
+            </div>
+            <code style="display:block;background:#fee2e2;padding:10px;border-radius:6px;font-size:12px;color:#991b1b;">
+              cd /chemin/vers/rgpd-scanner &amp;&amp; node bin/server.js
+            </code>
+          </div>`;
+        return;
+      }
+
+      // 2. Lancer le scan
+      const targetUrl = websiteUrl.startsWith('http') ? websiteUrl : 'https://' + websiteUrl;
+      btn.innerHTML = '<span class="spin">🔄</span> Scan en cours...';
+
+      try {
+        const res = await fetch(`${LOCAL_SERVER}/scan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: targetUrl, company_name: currentLead?.company || '' }),
+        });
+        const data = await res.json();
+
+        if (!res.ok && res.status !== 409) {
+          throw new Error(data.error || `Erreur ${res.status}`);
+        }
+
+        // 3. Afficher la progression
+        showScanProgress(targetUrl);
+
+        // 4. Polling toutes les 3s
+        if (scanPollingInterval) clearInterval(scanPollingInterval);
+        scanPollingInterval = setInterval(() => pollScanStatus(targetUrl), 3000);
+
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = '🔍 Lancer un scan';
+        container.innerHTML = `<div style="color:#dc2626;padding:16px;font-size:13px;">Erreur : ${err.message}</div>`;
+      }
+    }
+
+    function showScanProgress(targetUrl) {
+      const container = document.getElementById('scannerReportContainer');
+      let domain = targetUrl;
+      try { domain = new URL(targetUrl).hostname; } catch {}
+
+      container.innerHTML = `
+        <div style="text-align:center;padding:48px 20px;">
+          <div style="font-size:40px;margin-bottom:14px;" class="spin">🔍</div>
+          <div style="font-weight:600;font-size:15px;margin-bottom:6px;">Analyse en cours…</div>
+          <div style="color:var(--gray-500);font-size:13px;margin-bottom:24px;">
+            Scan de <strong>${domain}</strong> — environ 30 secondes
+          </div>
+          <div class="scan-progress-bar-track">
+            <div class="scan-progress-bar-fill" id="scanProgressFill"></div>
+          </div>
+          <div id="scanProgressLabel" style="font-size:12px;color:var(--gray-400);margin-top:10px;">
+            Initialisation…
+          </div>
+        </div>`;
+
+      // Animation progressive de la barre
+      const steps = [
+        { pct: 12, label: 'Chargement de la page…',      delay: 1000  },
+        { pct: 30, label: 'Analyse des cookies…',         delay: 6000  },
+        { pct: 50, label: 'Détection des traceurs…',      delay: 12000 },
+        { pct: 68, label: 'Vérification en-têtes HTTP…',  delay: 18000 },
+        { pct: 82, label: 'Analyse RGPD…',                delay: 23000 },
+        { pct: 93, label: 'Génération du rapport…',       delay: 28000 },
+      ];
+      for (const s of steps) {
+        setTimeout(() => {
+          const fill  = document.getElementById('scanProgressFill');
+          const label = document.getElementById('scanProgressLabel');
+          if (fill)  fill.style.width   = s.pct + '%';
+          if (label) label.textContent  = s.label;
+        }, s.delay);
+      }
+    }
+
+    async function pollScanStatus(targetUrl) {
+      try {
+        const res  = await fetch(`${LOCAL_SERVER}/scan-status?url=${encodeURIComponent(targetUrl)}`);
+        const data = await res.json();
+
+        if (data.status === 'done') {
+          clearInterval(scanPollingInterval);
+          scanPollingInterval = null;
+
+          // Compléter la barre
+          const fill  = document.getElementById('scanProgressFill');
+          const label = document.getElementById('scanProgressLabel');
+          if (fill)  fill.style.width  = '100%';
+          if (label) label.textContent = 'Scan terminé ! Chargement du rapport…';
+
+          setTimeout(async () => {
+            scanReportLoaded = false;
+            const btn = document.getElementById('scanBtn');
+            if (btn) { btn.disabled = false; btn.innerHTML = '🔄 Re-scanner'; }
+            await loadScannerReport();
+          }, 900);
+
+        } else if (data.status === 'error') {
+          clearInterval(scanPollingInterval);
+          scanPollingInterval = null;
+
+          const container = document.getElementById('scannerReportContainer');
+          container.innerHTML = `
+            <div style="padding:16px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
+              <div style="font-weight:600;color:#dc2626;">✗ Échec du scan</div>
+              <div style="font-size:13px;margin-top:6px;color:#7f1d1d;">${data.error || 'Erreur inconnue'}</div>
+            </div>`;
+
+          const btn = document.getElementById('scanBtn');
+          if (btn) { btn.disabled = false; btn.innerHTML = '🔍 Réessayer'; }
+        }
+      } catch {
+        // Serveur inaccessible → arrêter le polling silencieusement
+        clearInterval(scanPollingInterval);
+        scanPollingInterval = null;
+      }
     }
 
     loadLead();
