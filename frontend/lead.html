@@ -1310,8 +1310,8 @@
       const findings  = Array.isArray(r.findings_json)   ? r.findings_json   : [];
       const trackers  = r.trackers_count ?? 0;
       const cookies   = r.cookies_count  ?? 0;
-      const noConsent = !r.has_consent_banner;
-      const noPolicy  = !r.has_privacy_policy;
+      const noConsent = !r.has_consent_banner || r.has_consent_banner === 0;
+      const noPolicy  = !r.has_privacy_policy  || r.has_privacy_policy  === 0;
 
       // Noms des traceurs détectés
       const trackerNames = saas.filter(s => {
@@ -1434,22 +1434,8 @@
         grouped[f.category].push(f);
       }
 
-      // Texte copiable pour le commercial
-      const copyText = [
-        `=== Pré-audit RGPD — ${r.domain} (${date}) ===`,
-        `Score : ${score}/100 — Risque : ${brief.riskLabel}`,
-        '',
-        'RÉSUMÉ :',
-        r.domain + (r.has_privacy_policy ? ' dispose d\'une politique de conf.' : ' n\'a pas de politique de conf.') +
-          (r.has_consent_banner ? ', bannière de consentement présente' : ', AUCUNE bannière de consentement') +
-          `, ${r.trackers_count ?? 0} traceur(s), ${r.cookies_count ?? 0} cookie(s).`,
-        '',
-        'POINTS D\'ACCROCHE :',
-        ...brief.points.map(p => '• ' + p.text.replace(/<[^>]+>/g, '')),
-        '',
-        'PHRASE D\'OUVERTURE SUGGÉRÉE :',
-        brief.opener.replace(/<[^>]+>/g, ''),
-      ].join('\n');
+      // Stocker le rapport + brief pour le bouton Copier (évite l'injection dans onclick)
+      window._scanBrief = { r, brief, date, score };
 
       return `
         <!-- ── En-tête score ── -->
@@ -1492,8 +1478,7 @@
             <div class="brief-title" style="color:${color};">
               ${brief.riskEmoji} Brief commercial
             </div>
-            <button class="copy-btn" style="color:${color};"
-              onclick="navigator.clipboard.writeText(${JSON.stringify(copyText)}).then(()=>{this.textContent='✓ Copié !';setTimeout(()=>this.textContent='Copier',2000)})">
+            <button class="copy-btn" style="color:${color};" onclick="copyScanBrief(this)">
               Copier
             </button>
           </div>
@@ -1723,6 +1708,36 @@
         clearInterval(scanPollingInterval);
         scanPollingInterval = null;
       }
+    }
+
+    // ── Copie du brief commercial ─────────────────────────────────────
+    function copyScanBrief(btn) {
+      const sb = window._scanBrief;
+      if (!sb) return;
+      const { r, brief, date, score } = sb;
+      const lines = [
+        `=== Pré-audit RGPD — ${r.domain} (${date}) ===`,
+        `Score : ${score}/100 — Risque : ${brief.riskLabel}`,
+        '',
+        'RÉSUMÉ :',
+        r.domain
+          + (r.has_privacy_policy ? ' dispose d\'une politique de conf.' : ' n\'a pas de politique de conf.')
+          + (r.has_consent_banner  ? ', bannière consentement présente'   : ', AUCUNE bannière de consentement')
+          + `, ${r.trackers_count ?? 0} traceur(s), ${r.cookies_count ?? 0} cookie(s).`,
+        '',
+        'ARGUMENTS POUR LE CALL :',
+        ...brief.points.map(p => '• ' + p.text.replace(/<[^>]+>/g, '')),
+        '',
+        'PHRASE D\'OUVERTURE SUGGÉRÉE :',
+        brief.opener.replace(/<[^>]+>/g, ''),
+        '',
+        'EXPOSITION LÉGALE :',
+        ...brief.legalRisks.map(lr => '⚖ ' + lr.replace(/<[^>]+>/g, '')),
+      ];
+      navigator.clipboard.writeText(lines.join('\n')).then(() => {
+        btn.textContent = '✓ Copié !';
+        setTimeout(() => btn.textContent = 'Copier', 2200);
+      }).catch(() => btn.textContent = '✗ Erreur');
     }
 
     loadLead();
