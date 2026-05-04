@@ -10,7 +10,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
 
     .search-bar {
@@ -30,25 +30,43 @@
       background-position: 12px center;
     }
 
+    /* ── Filtres ── */
     .filters {
       display: flex;
-      gap: 8px;
-      margin-bottom: 24px;
+      gap: 6px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-group-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: 0 4px;
+    }
+
+    .filter-sep {
+      width: 1px;
+      height: 20px;
+      background: var(--border-color);
+      margin: 0 4px;
     }
 
     .filter-btn {
-      padding: 8px 16px;
+      padding: 6px 14px;
       border: 1px solid var(--border-color);
       background: white;
       border-radius: 20px;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
       transition: all 0.15s;
+      white-space: nowrap;
     }
 
-    .filter-btn:hover {
-      background-color: var(--gray-50);
-    }
+    .filter-btn:hover { background-color: var(--gray-50); }
 
     .filter-btn.active {
       background-color: var(--gray-900);
@@ -56,48 +74,112 @@
       border-color: var(--gray-900);
     }
 
-    .lead-row {
+    .filter-btn.risk-faible.active   { background: #16a34a; border-color: #16a34a; }
+    .filter-btn.risk-moyen.active    { background: #ca8a04; border-color: #ca8a04; }
+    .filter-btn.risk-eleve.active    { background: #ea580c; border-color: #ea580c; }
+    .filter-btn.risk-critique.active { background: #dc2626; border-color: #dc2626; }
+    .filter-btn.risk-ns.active       { background: #6b7280; border-color: #6b7280; }
+
+    /* ── Table ── */
+    .leads-grid {
       display: grid;
-      grid-template-columns: 60px 1fr 1.2fr 150px 150px 100px;
+      grid-template-columns: 50px 1.1fr 1fr 110px 100px 120px 70px;
       align-items: center;
-      padding: 16px;
-      border-bottom: 1px solid var(--border-color);
-      transition: background-color 0.15s;
     }
 
-    .lead-row:hover {
-      background-color: var(--gray-50);
+    .table-header {
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: 10px 16px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--border-color);
+      user-select: none;
     }
+
+    .th-sortable {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.15s;
+    }
+
+    .th-sortable:hover { color: var(--gray-800); }
+    .th-sortable.sorted { color: var(--gray-900); }
+
+    .sort-icon {
+      font-size: 10px;
+      opacity: 0.35;
+      flex-shrink: 0;
+    }
+
+    .th-sortable.sorted .sort-icon { opacity: 1; }
+
+    .lead-row {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border-color);
+      transition: background-color 0.12s;
+      cursor: pointer;
+    }
+
+    .lead-row:hover { background-color: var(--gray-50); }
+    .lead-row:last-child { border-bottom: none; }
 
     .lead-avatar {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      object-fit: cover;
-      background-color: var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 13px;
+      color: white;
+      flex-shrink: 0;
     }
 
-    .lead-name {
-      font-weight: 500;
-      color: var(--gray-900);
+    .lead-name  { font-weight: 500; color: var(--gray-900); font-size: 14px; }
+    .lead-pos   { font-size: 12px; color: var(--gray-500); margin-top: 1px; }
+    .lead-co    { color: var(--gray-700); font-size: 13px; }
+
+    /* ── Score RGPD ── */
+    .score-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
     }
 
+    .score-faible   { background: #dcfce7; color: #16a34a; }
+    .score-moyen    { background: #fef9c3; color: #a16207; }
+    .score-eleve    { background: #ffedd5; color: #c2410c; }
+    .score-critique { background: #fee2e2; color: #dc2626; }
+    .score-none     { background: var(--gray-100); color: var(--gray-400); font-weight: 500; }
+
+    /* ── Pagination ── */
     .pagination {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 8px;
-      margin-top: 24px;
+      gap: 6px;
+      margin-top: 20px;
     }
 
     .pagination-info {
       font-size: 13px;
-      color: var(--gray-600);
-      margin-right: 16px;
+      color: var(--gray-500);
+      margin-right: 12px;
     }
 
     .page-btn {
-      width: 32px;
+      min-width: 32px;
       height: 32px;
       border: 1px solid var(--border-color);
       background: white;
@@ -105,22 +187,22 @@
       cursor: pointer;
       font-size: 13px;
       transition: all 0.15s;
+      padding: 0 8px;
     }
 
-    .page-btn:hover {
-      background-color: var(--gray-50);
+    .page-btn:hover:not(:disabled) { background-color: var(--gray-50); }
+    .page-btn.active { background-color: var(--primary-blue); color: white; border-color: var(--primary-blue); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .stats-bar {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-bottom: 12px;
+      display: flex;
+      gap: 16px;
     }
 
-    .page-btn.active {
-      background-color: var(--primary-blue);
-      color: white;
-      border-color: var(--primary-blue);
-    }
-
-    .page-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .stats-bar span { display: inline-flex; align-items: center; gap: 4px; }
   </style>
 </head>
 <body>
@@ -133,40 +215,57 @@
 
       <div class="page-actions">
         <div class="search-bar">
-          <input
-            type="text"
-            class="search-input"
-            placeholder="Rechercher par nom ou entreprise..."
-            id="searchInput"
-          >
+          <input type="text" class="search-input" placeholder="Rechercher par nom, entreprise…" id="searchInput">
         </div>
-        <button class="btn btn-primary" onclick="window.location.href='/lead-create.html'">
-          + Ajouter un lead
-        </button>
+        <button class="btn btn-primary" onclick="window.location.href='/lead-create.html'">+ Ajouter un lead</button>
       </div>
 
+      <!-- Filtres statut -->
       <div class="filters">
-        <button class="filter-btn active" data-status="all">Tous</button>
-        <button class="filter-btn" data-status="nouveau">Nouveau</button>
-        <button class="filter-btn" data-status="en_cours">En cours</button>
-        <button class="filter-btn" data-status="gagne">Gagné</button>
-        <button class="filter-btn" data-status="perdu">Perdu</button>
+        <span class="filter-group-label">Statut</span>
+        <button class="filter-btn active" data-group="status" data-value="all">Tous</button>
+        <button class="filter-btn" data-group="status" data-value="nouveau">Nouveau</button>
+        <button class="filter-btn" data-group="status" data-value="en_cours">En cours</button>
+        <button class="filter-btn" data-group="status" data-value="gagne">Gagné</button>
+        <button class="filter-btn" data-group="status" data-value="perdu">Perdu</button>
+
+        <div class="filter-sep"></div>
+        <span class="filter-group-label">Risque RGPD</span>
+        <button class="filter-btn risk-critique" data-group="risk" data-value="critique">🔴 Critique</button>
+        <button class="filter-btn risk-eleve"    data-group="risk" data-value="eleve">🟠 Élevé</button>
+        <button class="filter-btn risk-moyen"    data-group="risk" data-value="moyen">🟡 Moyen</button>
+        <button class="filter-btn risk-faible"   data-group="risk" data-value="faible">🟢 Faible</button>
+        <button class="filter-btn risk-ns"       data-group="risk" data-value="non_scanne">⚪ Non scanné</button>
       </div>
+
+      <!-- Barre stats rapide -->
+      <div class="stats-bar" id="statsBar"></div>
 
       <div class="card">
         <div class="table-container">
-          <div style="font-weight: 600; font-size: 12px; color: var(--gray-600); text-transform: uppercase; padding: 12px 16px; background-color: var(--gray-50); display: grid; grid-template-columns: 60px 1fr 1.2fr 150px 150px 100px;">
+          <!-- En-têtes avec tri -->
+          <div class="leads-grid table-header">
             <div></div>
-            <div>NOM DU LEAD</div>
-            <div>ENTREPRISE</div>
-            <div>STATUT</div>
-            <div>DERNIÈRE ACTIVITÉ</div>
-            <div>ACTIONS</div>
-          </div>
-          <div id="leadsContainer">
-            <div style="text-align: center; padding: 48px; color: var(--gray-500);">
-              Chargement...
+            <div class="th-sortable" data-col="full_name" onclick="setSort('full_name')">
+              NOM <span class="sort-icon" id="sort-full_name">↕</span>
             </div>
+            <div class="th-sortable" data-col="company" onclick="setSort('company')">
+              ENTREPRISE <span class="sort-icon" id="sort-company">↕</span>
+            </div>
+            <div class="th-sortable" data-col="status" onclick="setSort('status')">
+              STATUT <span class="sort-icon" id="sort-status">↕</span>
+            </div>
+            <div class="th-sortable sorted" data-col="rgpd_score" onclick="setSort('rgpd_score')">
+              SCORE RGPD <span class="sort-icon" id="sort-rgpd_score">↕</span>
+            </div>
+            <div class="th-sortable" data-col="last_activity_at" onclick="setSort('last_activity_at')">
+              ACTIVITÉ <span class="sort-icon" id="sort-last_activity_at">↕</span>
+            </div>
+            <div></div>
+          </div>
+
+          <div id="leadsContainer">
+            <div style="text-align:center;padding:48px;color:var(--gray-500);">Chargement…</div>
           </div>
         </div>
 
@@ -180,103 +279,229 @@
   <script src="/src/components/sidebar.js"></script>
   <script>
     if (!utils.requireAuth()) throw new Error('Not authenticated');
-
     const sidebar = new Sidebar('leads');
     sidebar.init();
 
-    let currentFilter = 'all';
+    // ── État ──────────────────────────────────────────────────────────
+    let allLeads      = [];      // tous les leads de l'API
+    let currentFilter = 'all';   // filtre statut
+    let currentRisk   = '';      // filtre risque
     let currentSearch = '';
+    let sortCol       = 'rgpd_score';
+    let sortDir       = 'asc';   // asc = plus critique en premier
+    const PAGE_SIZE   = 50;
+    let currentPage   = 1;
 
-    // Filtres
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    // ── Couleurs avatar ───────────────────────────────────────────────
+    const COLORS = ['#2563eb','#7c3aed','#db2777','#dc2626','#ea580c','#16a34a','#0891b2','#4f46e5'];
+
+    // ── Filtres statut ────────────────────────────────────────────────
+    document.querySelectorAll('.filter-btn[data-group="status"]').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.filter-btn[data-group="status"]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        currentFilter = btn.dataset.status;
+        currentFilter = btn.dataset.value;
+        currentPage   = 1;
         loadLeads();
       });
     });
 
-    // Recherche avec debounce
-    document.getElementById('searchInput').addEventListener('input', utils.debounce((e) => {
+    // ── Filtres risque (toggle) ───────────────────────────────────────
+    document.querySelectorAll('.filter-btn[data-group="risk"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const already = btn.classList.contains('active');
+        document.querySelectorAll('.filter-btn[data-group="risk"]').forEach(b => b.classList.remove('active'));
+        if (!already) {
+          btn.classList.add('active');
+          currentRisk = btn.dataset.value;
+        } else {
+          currentRisk = '';
+        }
+        currentPage = 1;
+        loadLeads();
+      });
+    });
+
+    // ── Recherche ─────────────────────────────────────────────────────
+    document.getElementById('searchInput').addEventListener('input', utils.debounce(e => {
       currentSearch = e.target.value;
+      currentPage   = 1;
       loadLeads();
     }, 300));
 
+    // ── Tri ───────────────────────────────────────────────────────────
+    function setSort(col) {
+      if (sortCol === col) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortCol = col;
+        // Score : par défaut croissant (critique = 0 en premier)
+        sortDir = (col === 'rgpd_score') ? 'asc' : (col === 'last_activity_at' ? 'desc' : 'asc');
+      }
+      updateSortUI();
+      renderPage();
+    }
+
+    function updateSortUI() {
+      document.querySelectorAll('.th-sortable').forEach(th => {
+        const col = th.dataset.col;
+        th.classList.toggle('sorted', col === sortCol);
+        const icon = document.getElementById('sort-' + col);
+        if (icon) icon.textContent = col !== sortCol ? '↕' : (sortDir === 'asc' ? '↑' : '↓');
+      });
+    }
+
+    function sortLeads(leads) {
+      return [...leads].sort((a, b) => {
+        let va = a[sortCol], vb = b[sortCol];
+
+        // Nulls toujours en dernier
+        if (va == null && vb == null) return 0;
+        if (va == null) return 1;
+        if (vb == null) return -1;
+
+        // Comparaison
+        if (typeof va === 'string') va = va.toLowerCase();
+        if (typeof vb === 'string') vb = vb.toLowerCase();
+
+        const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+        return sortDir === 'asc' ? cmp : -cmp;
+      });
+    }
+
+    // ── Chargement API ────────────────────────────────────────────────
     async function loadLeads() {
+      document.getElementById('leadsContainer').innerHTML =
+        '<div style="text-align:center;padding:48px;color:var(--gray-500);">Chargement…</div>';
+
       try {
         const filters = {};
-        if (currentFilter !== 'all') {
-          filters.status = currentFilter;
-        }
-        if (currentSearch) {
-          filters.search = currentSearch;
-        }
+        if (currentFilter !== 'all') filters.status = currentFilter;
+        if (currentSearch)           filters.search  = currentSearch;
+        if (currentRisk)             filters.risk_level = currentRisk;
 
         const response = await api.getLeads(filters);
-        renderLeads(response.leads);
-      } catch (error) {
-        console.error('Error loading leads:', error);
-        document.getElementById('leadsContainer').innerHTML = `
-          <div style="text-align: center; padding: 48px; color: var(--gray-500);">
-            Erreur lors du chargement des leads
-          </div>
-        `;
+        allLeads = response.leads || [];
+        updateStats();
+        renderPage();
+      } catch (err) {
+        document.getElementById('leadsContainer').innerHTML =
+          '<div style="text-align:center;padding:48px;color:var(--gray-500);">Erreur de chargement</div>';
       }
+    }
+
+    // ── Stats rapides ─────────────────────────────────────────────────
+    function updateStats() {
+      const total    = allLeads.length;
+      const scanned  = allLeads.filter(l => l.rgpd_score != null).length;
+      const critique = allLeads.filter(l => l.rgpd_risk === 'critique').length;
+      const eleve    = allLeads.filter(l => l.rgpd_risk === 'eleve').length;
+
+      document.getElementById('statsBar').innerHTML = `
+        <span>📋 ${total} leads</span>
+        <span>🔍 ${scanned} scannés</span>
+        ${critique ? `<span>🔴 ${critique} critiques</span>` : ''}
+        ${eleve    ? `<span>🟠 ${eleve} élevés</span>`      : ''}
+      `;
+    }
+
+    // ── Rendu paginé ──────────────────────────────────────────────────
+    function renderPage() {
+      const sorted = sortLeads(allLeads);
+      const total  = sorted.length;
+      const pages  = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      currentPage  = Math.min(currentPage, pages);
+
+      const pageLeads = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+      renderLeads(pageLeads);
+      renderPagination(total, pages);
+      updateSortUI();
+    }
+
+    // ── Rendu tableau ─────────────────────────────────────────────────
+    function scoreHTML(lead) {
+      if (lead.rgpd_score == null) {
+        return `<span class="score-pill score-none">–</span>`;
+      }
+      const cls = { faible:'score-faible', moyen:'score-moyen', eleve:'score-eleve', critique:'score-critique' }[lead.rgpd_risk] || 'score-none';
+      const dot = { faible:'🟢', moyen:'🟡', eleve:'🟠', critique:'🔴' }[lead.rgpd_risk] || '⚪';
+      return `<span class="score-pill ${cls}">${dot} ${lead.rgpd_score}</span>`;
     }
 
     function renderLeads(leads) {
       const container = document.getElementById('leadsContainer');
 
       if (!leads || leads.length === 0) {
-        container.innerHTML = `
-          <div style="text-align: center; padding: 48px; color: var(--gray-500);">
-            Aucun lead trouvé
-          </div>
-        `;
+        container.innerHTML = '<div style="text-align:center;padding:48px;color:var(--gray-500);">Aucun lead trouvé</div>';
         return;
       }
 
-      container.innerHTML = leads.map((lead, index) => {
-        // Générer un avatar avec les initiales et couleur
+      container.innerHTML = leads.map(lead => {
         const initials = utils.getInitials(lead.first_name, lead.last_name);
-        const colors = ['#2563eb', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#16a34a', '#0891b2', '#4f46e5'];
-        const colorIndex = lead.id % colors.length;
-        const bgColor = colors[colorIndex];
+        const bg       = COLORS[lead.id % COLORS.length];
 
         return `
-          <div class="lead-row">
+          <div class="leads-grid lead-row" onclick="window.location.href='/lead.html?id=${lead.id}'">
             <div>
-              <div class="lead-avatar" style="background-color: ${bgColor}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">
-                ${initials}
-              </div>
+              <div class="lead-avatar" style="background:${bg};">${initials}</div>
             </div>
-            <div class="lead-name">${lead.full_name || lead.email}</div>
-            <div style="color: var(--gray-600);">${lead.company || '-'}</div>
+            <div>
+              <div class="lead-name">${lead.full_name || lead.email || '—'}</div>
+              ${lead.position ? `<div class="lead-pos">${lead.position}</div>` : ''}
+            </div>
+            <div class="lead-co">${lead.company || '—'}</div>
             <div>
               <span class="badge ${utils.getStatusBadgeClass(lead.status)}">
                 ${utils.getStatusLabel(lead.status)}
               </span>
             </div>
-            <div style="color: var(--gray-600); font-size: 13px;">
+            <div>${scoreHTML(lead)}</div>
+            <div style="color:var(--gray-500);font-size:12px;">
               ${utils.formatRelativeTime(lead.last_activity_at || lead.updated_at)}
             </div>
             <div>
-              <a href="/lead.html?id=${lead.id}" style="color: var(--primary-blue); font-weight: 500;">
+              <a href="/lead.html?id=${lead.id}"
+                 onclick="event.stopPropagation()"
+                 style="color:var(--primary-blue);font-weight:500;font-size:13px;">
                 Voir →
               </a>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('');
-
-      // Pagination simple
-      document.getElementById('pagination').innerHTML = `
-        <span class="pagination-info">Affichage de 1 à ${leads.length} résultats</span>
-        <button class="page-btn active">1</button>
-      `;
     }
 
+    // ── Pagination ────────────────────────────────────────────────────
+    function renderPagination(total, pages) {
+      const p = document.getElementById('pagination');
+      if (pages <= 1) {
+        p.innerHTML = `<span class="pagination-info">${total} lead${total > 1 ? 's' : ''}</span>`;
+        return;
+      }
+
+      let btns = `<span class="pagination-info">${total} leads</span>`;
+      btns += `<button class="page-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+      // Pages autour de la page courante
+      for (let i = 1; i <= pages; i++) {
+        if (i === 1 || i === pages || Math.abs(i - currentPage) <= 2) {
+          btns += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+        } else if (Math.abs(i - currentPage) === 3) {
+          btns += `<span style="color:var(--gray-400);padding:0 4px;">…</span>`;
+        }
+      }
+
+      btns += `<button class="page-btn" onclick="goPage(${currentPage + 1})" ${currentPage === pages ? 'disabled' : ''}>›</button>`;
+      p.innerHTML = btns;
+    }
+
+    function goPage(n) {
+      currentPage = n;
+      renderPage();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────
+    updateSortUI();
     loadLeads();
   </script>
 </body>

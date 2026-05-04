@@ -12,38 +12,52 @@ const leads = new Hono<{ Bindings: Env }>();
 leads.get('/', async (c) => {
   try {
     const user = getCurrentUser(c);
-    const { status, search } = c.req.query();
+    const { status, search, risk_level } = c.req.query();
 
-    let query = 'SELECT * FROM leads';
+    // JOIN avec le dernier scanner_report par lead (via MAX(id) par lead_id)
+    let query = `
+      SELECT l.*,
+             sr.score        AS rgpd_score,
+             sr.risk_level   AS rgpd_risk,
+             sr.scanned_at   AS rgpd_scanned_at
+      FROM leads l
+      LEFT JOIN scanner_reports sr
+        ON sr.lead_id = l.id
+        AND sr.id = (SELECT MAX(id) FROM scanner_reports WHERE lead_id = l.id)
+    `;
     const params: any[] = [];
-
-    // Filtres
     const conditions: string[] = [];
 
-    // Collaborateurs voient uniquement leurs leads
     if (user.role !== 'admin') {
-      conditions.push('user_id = ?');
+      conditions.push('l.user_id = ?');
       params.push(user.userId);
     }
 
     if (status) {
-      conditions.push('status = ?');
+      conditions.push('l.status = ?');
       params.push(status);
     }
 
     if (search) {
-      conditions.push(
-        '(full_name LIKE ? OR email LIKE ? OR company LIKE ?)'
-      );
-      const searchPattern = `%${search}%`;
-      params.push(searchPattern, searchPattern, searchPattern);
+      conditions.push('(l.full_name LIKE ? OR l.email LIKE ? OR l.company LIKE ?)');
+      const p = `%${search}%`;
+      params.push(p, p, p);
+    }
+
+    if (risk_level) {
+      if (risk_level === 'non_scanne') {
+        conditions.push('sr.id IS NULL');
+      } else {
+        conditions.push('sr.risk_level = ?');
+        params.push(risk_level);
+      }
     }
 
     if (conditions.length > 0) {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ' ORDER BY updated_at DESC';
+    query += ' ORDER BY l.updated_at DESC';
 
     const stmt = c.env.DB.prepare(query).bind(...params);
     const { results } = await stmt.all<Lead>();
