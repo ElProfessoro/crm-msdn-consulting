@@ -380,6 +380,35 @@
     }
     .copy-btn:hover { opacity: 1; }
 
+    /* Bouton copie inline dans les coordonnées */
+    .info-value-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .copy-inline-btn {
+      flex-shrink: 0;
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 2px 7px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--gray-500);
+      transition: all 0.15s;
+      line-height: 1.4;
+    }
+    .copy-inline-btn:hover {
+      background: var(--gray-100);
+      border-color: var(--gray-400);
+      color: var(--gray-700);
+    }
+    .copy-inline-btn.copied {
+      background: #dcfce7;
+      border-color: #86efac;
+      color: #16a34a;
+    }
+
     .kpi-row {
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0;
     }
@@ -477,16 +506,34 @@
             <button class="btn btn-secondary" onclick="makeCall()" disabled style="opacity: 0.5; cursor: not-allowed;">
               📞 Appeler
             </button>
+            <button class="btn btn-secondary" id="openDemoBtn" onclick="openAuditDemo()"
+              style="background: linear-gradient(135deg, #1e1b4b, #312e81); color: white; border: none; font-weight: 600; display: none;"
+              title="Ouvrir la démo Audit Engine RGPD pour ce prospect">
+              🎯 Ouvrir démo RGPD
+            </button>
           </div>
 
           <div class="section-label">Coordonnées</div>
           <div class="info-item">
             <div class="info-label">EMAIL</div>
-            <div class="info-value" id="contactEmail">-</div>
+            <div class="info-value-row">
+              <span class="info-value" id="contactEmail" style="flex:1;word-break:break-all;">-</span>
+              <button class="copy-inline-btn" onclick="copyCoord('contactEmail', this)" title="Copier l'email">📋</button>
+            </div>
           </div>
           <div class="info-item">
-            <div class="info-label">TÉLÉPHONE</div>
-            <div class="info-value" id="contactPhone">-</div>
+            <div class="info-label">TÉL. PORTABLE</div>
+            <div class="info-value-row">
+              <span class="info-value" id="contactPhone" style="flex:1;">-</span>
+              <button class="copy-inline-btn" onclick="copyCoord('contactPhone', this)" title="Copier le portable">📋</button>
+            </div>
+          </div>
+          <div class="info-item" id="contactPhoneStandardItem" style="display:none;">
+            <div class="info-label">TÉL. STANDARD</div>
+            <div class="info-value-row">
+              <span class="info-value" id="contactPhoneStandard" style="flex:1;">-</span>
+              <button class="copy-inline-btn" onclick="copyCoord('contactPhoneStandard', this)" title="Copier le tél. standard">📋</button>
+            </div>
           </div>
           <div class="info-item">
             <div class="info-label">ENTREPRISE</div>
@@ -579,11 +626,16 @@
 
             <!-- ── Onglet Pré-audit RGPD ───────────────────────────── -->
             <div class="tab-content" id="preaudit">
-              <div class="scan-trigger-bar">
-                <h4>🔍 Pré-audit RGPD automatique</h4>
-                <button id="scanBtn" class="btn-scan" onclick="triggerScan()">
-                  🔍 Lancer un scan
-                </button>
+              <div class="scan-trigger-bar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <h4 style="margin:0;">🔍 Pré-audit RGPD automatique</h4>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <button id="openDemoBtnTab" onclick="openAuditDemo()" style="display:none;background:linear-gradient(135deg,#1e1b4b,#312e81);color:white;border:none;border-radius:8px;padding:8px 16px;font-weight:600;cursor:pointer;font-size:13px;">
+                    🎯 Démo plein écran
+                  </button>
+                  <button id="scanBtn" class="btn-scan" onclick="triggerScan()">
+                    🔍 Lancer un scan
+                  </button>
+                </div>
               </div>
               <div id="scannerReportContainer">
                 <div style="text-align:center;padding:32px;color:var(--gray-500);">
@@ -673,6 +725,23 @@
     const sidebar = new Sidebar('leads');
     sidebar.init();
 
+    // ── Audit Engine — URL de la démo RGPD ──────────────────────────────
+    const AUDIT_ENGINE_URL = 'https://audit-engine-4vm.pages.dev';
+
+    function openAuditDemo() {
+      if (!leadId) return;
+      const url = `${AUDIT_ENGINE_URL}/audit/lead-${leadId}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    // Rendre le bouton visible une fois le lead chargé (et si un scan existe)
+    function showDemoButtonIfScanned(hasScan) {
+      const btn1 = document.getElementById('openDemoBtn');
+      const btn2 = document.getElementById('openDemoBtnTab');
+      if (btn1) btn1.style.display = hasScan ? 'block' : 'none';
+      if (btn2) btn2.style.display = hasScan ? 'inline-block' : 'none';
+    }
+
     const leadId = new URLSearchParams(window.location.search).get('id');
     let currentLead = null;
     let currentUser = null;
@@ -704,6 +773,10 @@
         currentUser = userResponse.user;
         renderLead(currentLead);
         renderActivities(activitiesResponse.activities);
+
+        // Afficher le bouton démo si le lead a déjà été scanné (score présent)
+        const alreadyScanned = currentLead.rgpd_score != null || currentLead.rgpd_risk != null;
+        showDemoButtonIfScanned(alreadyScanned);
 
         // Charger les utilisateurs si admin
         if (currentUser.role === 'admin') {
@@ -778,6 +851,22 @@
 
       document.getElementById('contactEmail').textContent = lead.email || '-';
       document.getElementById('contactPhone').textContent = lead.phone || '-';
+
+      // Tél standard extrait des notes ("Tél standard : +33 X XX XX XX XX")
+      let phoneStandard = null;
+      if (lead.notes) {
+        const m = lead.notes.match(/Tél standard\s*:\s*([^|]+)/);
+        if (m) phoneStandard = m[1].trim();
+      }
+      const stdItem = document.getElementById('contactPhoneStandardItem');
+      const stdEl   = document.getElementById('contactPhoneStandard');
+      if (phoneStandard) {
+        stdEl.textContent = phoneStandard;
+        stdItem.style.display = '';
+      } else {
+        stdItem.style.display = 'none';
+      }
+
       document.getElementById('contactCompany').textContent = lead.company || '-';
       document.getElementById('contactLinkedin').innerHTML = lead.linkedin_url
         ? `<a href="${lead.linkedin_url}" target="_blank">${lead.linkedin_url}</a>`
@@ -1259,6 +1348,7 @@
 
         if (!report) {
           container.innerHTML = renderNoScan();
+          showDemoButtonIfScanned(false);
           // Activer le bouton scan s'il y a un site
           const btn = document.getElementById('scanBtn');
           if (btn && !currentLead?.website_url) btn.disabled = true;
@@ -1266,6 +1356,7 @@
         }
 
         container.innerHTML = renderScanReport(report);
+        showDemoButtonIfScanned(true);
         // Mettre le bouton en mode "re-scanner"
         const btn = document.getElementById('scanBtn');
         if (btn) btn.innerHTML = '🔄 Re-scanner';
@@ -1708,6 +1799,20 @@
         clearInterval(scanPollingInterval);
         scanPollingInterval = null;
       }
+    }
+
+    // ── Copie des coordonnées ─────────────────────────────────────────
+    function copyCoord(elementId, btn) {
+      const text = document.getElementById(elementId)?.textContent?.trim();
+      if (!text || text === '-') return;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = '✓';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 1800);
+      }).catch(() => {
+        btn.textContent = '✗';
+        setTimeout(() => btn.textContent = '📋', 1800);
+      });
     }
 
     // ── Copie du brief commercial ─────────────────────────────────────
