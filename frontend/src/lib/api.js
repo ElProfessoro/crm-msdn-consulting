@@ -4,7 +4,7 @@
 
 const API_BASE_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:8787'
-  : 'https://crm-api.msalla-youssef.workers.dev';
+  : 'https://api.msdnconsulting.com';
 
 class APIClient {
   constructor() {
